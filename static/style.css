@@ -668,3 +668,120 @@ a {
         border: none;
     }
 }
+
+
+/* =====================================
+   Responsive POS UI (Desktop + Mobile)
+   ===================================== */
+
+/* ---------- Base improvements (ALL screens) ---------- */
+
+.menu-item {
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 14px;
+  transition: box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.menu-item:hover {
+  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+  transform: translateY(-1px);
+}
+
+.menu-item h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.menu-item .meta {
+  font-size: 13px;
+  color: #666;
+}
+
+.menu-item .price {
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* ---------- Navigation (ALL screens) ---------- */
+
+.nav,
+.top-nav {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.nav a,
+.top-nav a,
+.nav button {
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* =====================================
+   MOBILE ADAPTATION
+   ===================================== */
+
+@media (max-width: 768px) {
+
+  body {
+    font-size: 15px;
+  }
+
+  /* Stack nav neatly */
+  .nav,
+  .top-nav {
+    gap: 6px;
+  }
+
+  .nav a,
+  .top-nav a,
+  .nav button {
+    flex: 1 1 48%;
+    text-align: center;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  /* Menu cards become full-width */
+  .menu-item {
+    padding: 16px;
+  }
+
+  .menu-item h4 {
+    font-size: 17px;
+  }
+
+  /* Better tap targets */
+  .menu-item button {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    margin-top: 8px;
+  }
+
+  /* Tables scroll instead of breaking */
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+}
+
+/* =====================================
+   LARGE SCREENS (Laptop / Desktop)
+   ===================================== */
+
+@media (min-width: 1024px) {
+
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+  }
+
+}
