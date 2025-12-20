@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Bill {{ bill.seq_code }} - Ice Land{% endblock %}
+{% block content %}
+<div class="report-container">
+    <h2>Bill Details</h2>
+    <p><strong>Bill No:</strong> {{ bill.seq_code }}</p>
+    <p><strong>Bill ID:</strong> {{ bill.id }}</p>
+    <p><strong>Date/Time:</strong> {{ bill.created_at.strftime('%d-%m-%Y %H:%M:%S') }}</p>
+    <p><strong>Customer:</strong> {{ bill.customer_name or '-' }}</p>
+    <p><strong>Status:</strong> {{ bill.status }}</p>
+    <p><strong>Total Amount (₹):</strong> {{ '%.2f' % bill.total_amount }}</p>
+    <p><strong>Note:</strong> {{ bill.note or '-' }}</p>
+
+    <h3>Items</h3>
+    <table class="report-table">
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Item</th>
+                <th>Qty</th>
+                <th>Refunded</th>
+                <th>Remaining</th>
+                <th>Unit Price</th>
+                <th>Line Total</th>
+                <th>Refund Item</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for bi, remaining in items_with_remaining %}
+            <tr>
+                <td>{{ bi.item.product_code }}</td>
+                <td>{{ bi.item.name }}</td>
+                <td>{{ bi.quantity }}</td>
+                <td>{{ bi.refunded_qty }}</td>
+                <td>{{ remaining }}</td>
+                <td>{{ '%.2f' % bi.item.price }}</td>
+                <td>{{ '%.2f' % bi.line_total }}</td>
+                <td>
+                    {% if remaining > 0 and bill.status == 'ACTIVE' %}
+                    <form action="{{ url_for('admin_refund_bill_item', bill_id=bill.id, bill_item_id=bi.id) }}" method="post">
+                        <input type="number" name="qty" min="1" max="{{ remaining }}" required>
+                        <input type="text" name="note" placeholder="Reason" required>
+                        <button type="submit">Refund</button>
+                    </form>
+                    {% else %}
+                    <span class="muted">No refund</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Login - Ice Land POS{% endblock %}
+{% block content %}
+<div class="auth-box">
+    <h2>Login</h2>
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+    <form method="post">
+        <label>Username
+            <input type="text" name="username" required>
+        </label>
+        <label>Password
+            <input type="password" name="password" required>
+        </label>
+        <button type="submit">Login</button>
+    </form>
+    <p class="hint">Admin: admin / admin123 &nbsp;|&nbsp; Staff: amar / amar123</p>
+</div>
+{% endblock %}

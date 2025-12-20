@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - Ice Land POS{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <h2>Admin Dashboard</h2>
+  <p class="muted">Admin-only controls.</p>
+
+  <div class="admin-cards">
+    <a class="admin-card" href="{{ url_for('admin_items') }}">
+      <div class="admin-card-title">Edit Prices</div>
+      <div class="admin-card-sub">Update menu item prices (e.g., Cone ₹35).</div>
+    </a>
+
+    <a class="admin-card" href="{{ url_for('daily_report') }}">
+      <div class="admin-card-title">Daily Report</div>
+      <div class="admin-card-sub">Today&#39;s sales, refunds, cancellations, and best sellers.</div>
+    </a>
+
+    <a class="admin-card" href="{{ url_for('admin_bills_list') }}">
+      <div class="admin-card-title">Bills</div>
+      <div class="admin-card-sub">Search old bills and open details for refund/cancel workflow.</div>
+    </a>
+  </div>
+
+  <div class="admin-actions">
+    <a class="secondary-link" href="{{ url_for('pos') }}">Back to POS</a>
+  </div>
+</div>
+{% endblock %}

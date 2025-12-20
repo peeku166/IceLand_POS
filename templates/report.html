@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Daily Report - Ice Land{% endblock %}
+{% block content %}
+<div class="report-container">
+    <h2>Daily Report - {{ today.strftime('%d-%m-%Y') }}</h2>
+
+    <h3>Summary</h3>
+    <p><strong>Gross Sales (ACTIVE, incl. GST):</strong> ₹{{ '%.2f' % gross_sales }}</p>
+    <p><strong>Refund Total (REFUNDED bills):</strong> ₹{{ '%.2f' % refund_total }}</p>
+    <p><strong>Cancelled Total (CANCELLED bills):</strong> ₹{{ '%.2f' % cancel_total }}</p>
+    <p><strong>Net Revenue (Gross - Refunds):</strong> ₹{{ '%.2f' % net_revenue }}</p>
+
+    <h3>Best Sellers (ACTIVE only, non-refunded qty)</h3>
+    {% if best_sellers %}
+    <table class="report-table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Qty Sold</th>
+                <th>Revenue (₹)</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for name, stats in best_sellers %}
+            <tr>
+                <td>{{ name }}</td>
+                <td>{{ stats.qty }}</td>
+                <td>{{ '%.2f' % stats.revenue }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No active bills for today yet.</p>
+    {% endif %}
+
+    <h3>All Bills (Admin audit + Actions)</h3>
+    {% if bills %}
+    <table class="report-table">
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Bill No</th>
+                <th>Bill ID</th>
+                <th>Customer</th>
+                <th>Amount (₹)</th>
+                <th>Status</th>
+                <th>Note</th>
+                <th>Staff</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for b in bills %}
+            <tr>
+                <td>{{ b.created_at.strftime('%H:%M:%S') }}</td>
+                <td>{{ b.seq_code }}</td>
+                <td>{{ b.id }}</td>
+                <td>{{ b.customer_name or '-' }}</td>
+                <td>{{ '%.2f' % b.total_amount }}</td>
+                <td>{{ b.status }}</td>
+                <td>{{ b.note or '' }}</td>
+                <td>{{ b.user.username if b.user else '-' }}</td>
+                <td>
+                    <a href="{{ url_for('admin_bill_detail', bill_id=b.id) }}">View</a>
+                    {% if b.status == 'ACTIVE' %}
+                    <form action="{{ url_for('admin_update_bill_status', bill_id=b.id) }}" method="post" style="display:inline;">
+                        <input type="hidden" name="status" value="REFUNDED">
+                        <input type="text" name="note" placeholder="Reason" required>
+                        <button type="submit">Refund</button>
+                    </form>
+                    <form action="{{ url_for('admin_update_bill_status', bill_id=b.id) }}" method="post" style="display:inline;">
+                        <input type="hidden" name="status" value="CANCELLED">
+                        <input type="text" name="note" placeholder="Reason" required>
+                        <button type="submit">Cancel</button>
+                    </form>
+                    {% else %}
+                    <span class="muted">No actions</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No bills for today yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}POS - Ice Land{% endblock %}
+{% block content %}
+<div class="pos-container">
+    <div class="menu-panel">
+        <h2>Menu</h2>
+        <div id="menu-container">
+            <!-- JS will fill categories and items here -->
+        </div>
+    </div>
+
+    <div class="cart-panel">
+        <h2>Cart</h2>
+        <div class="customer-name">
+            <label>Customer Name (optional)
+                <input type="text" id="customer-name">
+            </label>
+        </div>
+        <table id="cart-table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Total</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- JS inserts rows -->
+            </tbody>
+        </table>
+        <div class="cart-total">
+            Total (incl. GST): ₹<span id="cart-total-amount">0.00</span>
+        </div>
+        <div class="cart-actions no-print">
+            <button id="clear-cart">Clear</button>
+            <button id="checkout">Print Bill</button>
+        </div>
+
+        <div class="reprint-actions no-print">
+            <button id="reopen-last" class="secondary-btn">Reopen &amp; Print Last Bill</button>
+            <div>
+                <input id="reprint-code" type="text" placeholder="Bill No (e.g. IL00005)">
+                <button id="reprint-btn" class="secondary-btn">Reprint Bill</button>
+            </div>
+        </div>
+
+        <div id="bill-print-area" class="bill-print">
+            <!-- Filled by JS before printing -->
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+{% endblock %}
