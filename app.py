@@ -13,32 +13,6 @@ db = SQLAlchemy(app)
 
 from werkzeug.security import generate_password_hash
 
-def init_db():
-    with app.app_context():
-        db.create_all()
-
-        # Create admin user if not exists
-        from app import User  # if User is in same file, ignore this line
-
-        admin = User.query.filter_by(username="admin").first()
-        if not admin:
-            admin = User(
-                username="admin",
-                password_hash=generate_password_hash("Iceland@2025"),
-                role="admin"
-            )
-            db.session.add(admin)
-
-        staff = User.query.filter_by(username="amar").first()
-        if not staff:
-            staff = User(
-                username="amar",
-                password_hash=generate_password_hash("amar123"),
-                role="staff"
-            )
-            db.session.add(staff)
-
-        db.session.commit()
 
 # ---------- Models ----------
 
@@ -607,7 +581,7 @@ def admin_refund_bill_item(bill_id, bill_item_id):
     # Browser form: go back to bill detail
     return redirect(url_for('admin_bill_detail', bill_id=bill.id))
 
-init_db()
+
 
 if __name__ == '__main__':
     # Initialize DB and seed data before starting the server
