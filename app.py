@@ -4,9 +4,27 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()  # Load variables from .env if present
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'change-this-secret-key'  # change in production
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///icecream.db'
+
+# DB Configuration
+# 1. Try to get DATABASE_URL from environment (Cloud)
+# 2. Fallback to local SQLite
+database_url = os.getenv('DATABASE_URL')
+
+if database_url:
+    # Fix for SQLAlchemy 1.4+ which deprecated 'postgres://'
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///icecream.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
