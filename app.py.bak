@@ -1,36 +1,44 @@
+
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func, extract
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, date, timedelta
-
-import os
-from dotenv import load_dotenv
-
-load_dotenv()  # Load variables from .env if present
+from datetime import datetime, date
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'change-this-secret-key'  # change in production
-
-# DB Configuration
-# 1. Try to get DATABASE_URL from environment (Cloud)
-# 2. Fallback to local SQLite
-database_url = os.getenv('DATABASE_URL')
-
-if database_url:
-    # Fix for SQLAlchemy 1.4+ which deprecated 'postgres://'
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///icecream.db'
-
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///icecream.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
 from werkzeug.security import generate_password_hash
 
+def init_db():
+    with app.app_context():
+        db.create_all()
+
+        # Create admin user if not exists
+        from app import User  # if User is in same file, ignore this line
+
+        admin = User.query.filter_by(username="admin").first()
+        if not admin:
+            admin = User(
+                username="admin",
+                password_hash=generate_password_hash("Iceland@2025"),
+                role="admin"
+            )
+            db.session.add(admin)
+
+        staff = User.query.filter_by(username="amar").first()
+        if not staff:
+            staff = User(
+                username="amar",
+                password_hash=generate_password_hash("amar123"),
+                role="staff"
+            )
+            db.session.add(staff)
+
+        db.session.commit()
 
 # ---------- Models ----------
 
@@ -289,148 +297,55 @@ def pos():
     return render_template('pos.html', user=user)
 
 
-@app.route('/admin/reports')
+@app.route('/admin/report')
 @admin_required
-def admin_reports():
-    """New Advanced Reporting Dashboard."""
+def daily_report():
+    # Daily report for today (admin-only)
     user = get_current_user()
-    return render_template('report.html', user=user, today=date.today())
-
-
-@app.route('/api/reports/sales')
-@admin_required
-def api_report_sales():
-    """
-    Get sales data for a specific range.
-    query params: type=daily|monthly|yearly, date=YYYY-MM-DD (or YYYY-MM or YYYY)
-    """
-    rtype = request.args.get('type', 'daily')
-    date_str = request.args.get('date', str(date.today()))
-
-    query = Bill.query.filter(Bill.status == 'ACTIVE')
-
-    try:
-        if rtype == 'daily':
-            # Format: YYYY-MM-DD
-            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-            start = datetime(target_date.year, target_date.month, target_date.day)
-            end = datetime(target_date.year, target_date.month, target_date.day, 23, 59, 59)
-            query = query.filter(Bill.created_at >= start, Bill.created_at <= end)
-
-        elif rtype == 'monthly':
-            # Format: YYYY-MM
-            parts = date_str.split('-')
-            year, month = int(parts[0]), int(parts[1])
-            query = query.filter(extract('year', Bill.created_at) == year,
-                                 extract('month', Bill.created_at) == month)
-
-        elif rtype == 'yearly':
-            # Format: YYYY
-            year = int(date_str)
-            query = query.filter(extract('year', Bill.created_at) == year)
-
-    except ValueError:
-        return jsonify({'error': 'Invalid date format'}), 400
-
-    bills = query.order_by(Bill.created_at).all()
-
-    # Aggregate Data
-    total_sales = sum(b.total_amount for b in bills)
-    bill_count = len(bills)
-
-    # Serialize for table
-    bills_data = [{
-        'id': b.id,
-        'seq_code': b.seq_code,
-        'time': b.created_at.isoformat(),
-        'total': b.total_amount,
-        'staff': b.user.username if b.user else '-'
-    } for b in bills]
-
-    return jsonify({
-        'total_sales': total_sales,
-        'bill_count': bill_count,
-        'bills': bills_data
-    })
-
-
-@app.route('/api/reports/items')
-@admin_required
-def api_report_items():
-    """Item-wise sales analysis."""
-    # filtering by date range optional, for now return all-time or last 30 days
-    # Let's support range filtering same as above if needed, but for now allow 'all'
-    start_str = request.args.get('start')
-    end_str = request.args.get('end')
-
-    query = db.session.query(
-        Item.name,
-        Item.product_code,
-        Item.category,
-        func.sum(BillItem.quantity).label('total_qty'),
-        func.sum(BillItem.line_total).label('total_revenue')
-    ).join(BillItem, Item.id == BillItem.item_id).join(Bill, Bill.id == BillItem.bill_id)
-
-    query = query.filter(Bill.status == 'ACTIVE')
-
-    if start_str and end_str:
-        try:
-            s_date = datetime.strptime(start_str, '%Y-%m-%d')
-            e_date = datetime.strptime(end_str, '%Y-%m-%d') + timedelta(days=1)
-            query = query.filter(Bill.created_at >= s_date, Bill.created_at < e_date)
-        except ValueError:
-            pass
-
-    results = query.group_by(Item.id).order_by(func.sum(BillItem.quantity).desc()).all()
-
-    data = [{
-        'name': r.name,
-        'code': r.product_code,
-        'category': r.category,
-        'qty': r.total_qty,
-        'revenue': r.total_revenue
-    } for r in results]
-
-    return jsonify(data)
-
-
-@app.route('/api/reports/analysis')
-@admin_required
-def api_report_analysis():
-    """Analytics for charts."""
-    # 1. Category Split
-    cat_query = db.session.query(
-        Item.category,
-        func.sum(BillItem.line_total)
-    ).join(BillItem).join(Bill).filter(Bill.status == 'ACTIVE').group_by(Item.category).all()
-
-    cat_data = {c[0]: c[1] for c in cat_query}
-
-    # 2. Last 7 Days Trend
     today = date.today()
-    seven_days_ago = today - timedelta(days=6)
-    start_dt = datetime.combine(seven_days_ago, datetime.min.time())
+    start = datetime(today.year, today.month, today.day)
+    end = datetime(today.year, today.month, today.day, 23, 59, 59)
 
-    trend_query = db.session.query(
-        func.date(Bill.created_at),
-        func.sum(Bill.total_amount)
-    ).filter(Bill.status == 'ACTIVE', Bill.created_at >= start_dt).group_by(func.date(Bill.created_at)).all()
+    bills = Bill.query.filter(Bill.created_at >= start, Bill.created_at <= end).order_by(Bill.created_at).all()
 
-    # Fill missing dates with 0
-    trend_dict = {str(r[0]): r[1] for r in trend_query}
-    trend_data = []
-    labels = []
-    for i in range(7):
-        d = seven_days_ago + timedelta(days=i)
-        d_str = str(d)
-        labels.append(d.strftime('%d-%b'))
-        trend_data.append(trend_dict.get(d_str, 0))
+    # Split by status
+    active_bills = [b for b in bills if b.status == 'ACTIVE']
+    refunded_bills = [b for b in bills if b.status == 'REFUNDED']
+    cancelled_bills = [b for b in bills if b.status == 'CANCELLED']
 
-    return jsonify({
-        'category_split': cat_data,
-        'trend_labels': labels,
-        'trend_data': trend_data
-    })
+    gross_sales = sum(b.total_amount for b in active_bills)
+    refund_total = sum(b.total_amount for b in refunded_bills)
+    cancel_total = sum(b.total_amount for b in cancelled_bills)
+
+    # Net revenue = active - refunds (cancelled ignored for money if nothing collected)
+    net_revenue = gross_sales - refund_total
+
+    # Aggregate best-seller items from ACTIVE bills only (using non-refunded quantities)
+    item_stats = {}
+    for b in active_bills:
+        for bi in b.items:
+            effective_qty = bi.quantity - (bi.refunded_qty or 0)
+            if effective_qty <= 0:
+                continue
+            key = f"{bi.item.product_code} - {bi.item.name}"
+            if key not in item_stats:
+                item_stats[key] = {'qty': 0, 'revenue': 0.0}
+            item_stats[key]['qty'] += effective_qty
+            item_stats[key]['revenue'] += effective_qty * bi.item.price
+
+    best_sellers = sorted(item_stats.items(), key=lambda x: x[1]['qty'], reverse=True)
+
+    return render_template(
+        'report.html',
+        user=user,
+        today=today,
+        bills=bills,
+        gross_sales=gross_sales,
+        refund_total=refund_total,
+        cancel_total=cancel_total,
+        net_revenue=net_revenue,
+        best_sellers=best_sellers,
+    )
 
 
 @app.route('/admin/bills')
@@ -478,71 +393,23 @@ def admin_items():
     user = get_current_user()
 
     if request.method == 'POST':
-        action = request.form.get('action')
-        
-        # --- ADD ITEM ---
-        if action == 'add':
-            code = request.form.get('code', '').strip().upper()
-            category = request.form.get('category', '').strip()
-            name = request.form.get('name', '').strip()
-            price_raw = request.form.get('price', '').strip()
-            
-            if not (code and category and name and price_raw):
-                return render_template('admin_items.html', user=user, items=Item.query.order_by(Item.category, Item.name).all(), error='All fields are required.'), 400
-            
-            # Check unique code
-            if Item.query.filter_by(product_code=code).first():
-                return render_template('admin_items.html', user=user, items=Item.query.order_by(Item.category, Item.name).all(), error=f'Product Code {code} already exists.'), 400
+        item_id = int(request.form.get('item_id', 0) or 0)
+        new_price_raw = (request.form.get('price') or '').strip()
 
-            try:
-                price = float(price_raw)
-            except ValueError:
-                return render_template('admin_items.html', user=user, items=Item.query.order_by(Item.category, Item.name).all(), error='Invalid price.'), 400
+        item = Item.query.get_or_404(item_id)
+        try:
+            new_price = float(new_price_raw)
+        except ValueError:
+            return render_template('admin_items.html', user=user, items=Item.query.order_by(Item.category, Item.name).all(), error='Invalid price.'), 400
 
-            db.session.add(Item(product_code=code, category=category, name=name, price=price))
-            db.session.commit()
-            
-        # --- DELETE ITEM ---
-        elif action == 'delete':
-            item_id = int(request.form.get('item_id', 0))
-            item = Item.query.get(item_id)
-            if item:
-                # Optional: Check if used in bills? 
-                # For now allow delete, but it might break analytics if we don't handle nulls.
-                # Ideally we should just mark inactive, but user asked for delete.
-                # We'll rely on foreign key to set null or cascade if set? 
-                # actually FlaskSQLAlchemy default might fail if restricted.
-                # Let's check if used in BillItem
-                if BillItem.query.filter_by(item_id=item.id).first():
-                     return render_template('admin_items.html', user=user, items=Item.query.order_by(Item.category, Item.name).all(), error='Cannot delete item used in past bills. (Database safety)'), 400
-                
-                db.session.delete(item)
-                db.session.commit()
+        if new_price < 0:
+            return render_template('admin_items.html', user=user, items=Item.query.order_by(Item.category, Item.name).all(), error='Price must be 0 or greater.'), 400
 
-        # --- UPDATE PRICE ---
-        elif action == 'update_price':
-            item_id = int(request.form.get('item_id', 0) or 0)
-            new_price_raw = (request.form.get('price') or '').strip()
-
-            item = Item.query.get_or_404(item_id)
-            try:
-                new_price = float(new_price_raw)
-            except ValueError:
-                return render_template('admin_items.html', user=user, items=Item.query.order_by(Item.category, Item.name).all(), error='Invalid price.'), 400
-
-            if new_price < 0:
-                return render_template('admin_items.html', user=user, items=Item.query.order_by(Item.category, Item.name).all(), error='Price must be 0 or greater.'), 400
-
-            item.price = new_price
-            db.session.commit()
-
-        return redirect(url_for('admin_items'))
+        item.price = new_price
+        db.session.commit()
 
     items = Item.query.order_by(Item.category, Item.name).all()
-    # Get unique existing categories for suggestion datalist
-    categories = sorted(list(set([i.category for i in items])))
-    
-    return render_template('admin_items.html', user=user, items=items, categories=categories)
+    return render_template('admin_items.html', user=user, items=items)
 
 
 # ---------- API endpoints ----------
@@ -671,7 +538,7 @@ def admin_update_bill_status(bill_id):
     db.session.commit()
 
     if not request.is_json:
-        return redirect(url_for('admin_reports'))
+        return redirect(url_for('daily_report'))
 
     return jsonify({
         'bill_id': bill.id,

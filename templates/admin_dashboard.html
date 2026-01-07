@@ -9,18 +9,46 @@
 
   <div class="admin-cards">
     <a class="admin-card" href="{{ url_for('admin_items') }}">
-      <div class="admin-card-title">Edit Prices</div>
-      <div class="admin-card-sub">Update menu item prices (e.g., Cone ₹35).</div>
+      <div class="icon-box">
+        <!-- Icon: Tag/Price -->
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+          <line x1="7" y1="7" x2="7.01" y2="7"></line>
+        </svg>
+      </div>
+      <div class="admin-card-title">Manage Menu</div>
+      <div class="admin-card-sub">Add items, delete items, update prices.</div>
     </a>
 
-    <a class="admin-card" href="{{ url_for('daily_report') }}">
-      <div class="admin-card-title">Daily Report</div>
-      <div class="admin-card-sub">Today&#39;s sales, refunds, cancellations, and best sellers.</div>
+    <a class="admin-card" href="{{ url_for('admin_reports') }}">
+      <div class="icon-box">
+        <!-- Icon: Bar Chart -->
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+      </div>
+      <div class="admin-card-title">Advanced Reports</div>
+      <div class="admin-card-sub">Sales analytics, charts, and trends.</div>
     </a>
 
     <a class="admin-card" href="{{ url_for('admin_bills_list') }}">
-      <div class="admin-card-title">Bills</div>
-      <div class="admin-card-sub">Search old bills and open details for refund/cancel workflow.</div>
+      <div class="icon-box">
+        <!-- Icon: File Text -->
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+      </div>
+      <div class="admin-card-title">Bills History</div>
+      <div class="admin-card-sub">Search past declarations and refunds.</div>
     </a>
   </div>
 

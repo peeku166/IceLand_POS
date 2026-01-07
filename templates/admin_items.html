@@ -4,12 +4,51 @@
 
 {% block content %}
 <div class="panel">
-  <h2>Edit Prices</h2>
-  <p class="muted">Update prices and save. Prices are GST inclusive.</p>
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h2>Manage Menu</h2>
+    <a class="secondary-link" href="{{ url_for('admin_dashboard') }}">Back to Admin</a>
+  </div>
+  <p class="muted">Add new items or edit existing prices.</p>
 
   {% if error %}
-    <div class="error">{{ error }}</div>
+  <div class="error"
+    style="background:#ffebee; color:#c62828; padding:10px; border:1px solid #ffcdd2; margin-bottom:10px;">{{ error }}
+  </div>
   {% endif %}
+
+  <!-- ADD NEW ITEM FORM -->
+  <div style="background:#f9f9f9; padding:15px; border:1px solid #ddd; margin-bottom:20px;">
+    <h3>Add New Item</h3>
+    <form method="post" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+      <input type="hidden" name="action" value="add">
+
+      <label>Code
+        <input type="text" name="code" placeholder="SC-050" required style="width:100px; padding:5px;">
+      </label>
+
+      <label>Category
+        <input type="text" name="category" list="cat-list" placeholder="Scoops" required
+          style="width:120px; padding:5px;">
+        <datalist id="cat-list">
+          {% for c in categories %}
+          <option value="{{ c }}">
+            {% endfor %}
+        </datalist>
+      </label>
+
+      <label>Name
+        <input type="text" name="name" placeholder="New Ice Cream" required style="width:200px; padding:5px;">
+      </label>
+
+      <label>Price (₹)
+        <input type="number" name="price" step="0.01" min="0" placeholder="100" required
+          style="width:80px; padding:5px;">
+      </label>
+
+      <button type="submit" style="padding:6px 15px; background:#000; color:#fff; border:none; cursor:pointer;">+ Add
+        Item</button>
+    </form>
+  </div>
 
   <div class="table-wrap">
     <table class="report-table">
@@ -19,32 +58,37 @@
           <th>Category</th>
           <th>Item</th>
           <th style="width:120px;">Price (₹)</th>
-          <th style="width:120px;">Action</th>
+          <th style="width:180px;">Actions</th>
         </tr>
       </thead>
       <tbody>
-      {% for i in items %}
+        {% for i in items %}
         <tr>
-          <td data-label="Code">{{ i.product_code }}</td>
-          <td data-label="Category">{{ i.category }}</td>
-          <td data-label="Item">{{ i.name }}</td>
-          <td data-label="Price">
-            <form method="post" class="inline-form">
+          <td>{{ i.product_code }}</td>
+          <td>{{ i.category }}</td>
+          <td>{{ i.name }}</td>
+          <td>
+            <form method="post" class="inline-form" style="display:flex; gap:5px;">
+              <input type="hidden" name="action" value="update_price">
               <input type="hidden" name="item_id" value="{{ i.id }}">
-              <input class="price-input" type="number" step="0.01" min="0" name="price" value="{{ '%.2f'|format(i.price) }}" required>
+              <input class="price-input" type="number" step="0.01" min="0" name="price"
+                value="{{ '%.2f'|format(i.price) }}" required style="width:80px; padding:5px;">
+              <button type="submit" style="padding:5px;">Save</button>
+            </form>
           </td>
-          <td data-label="Action">
-              <button type="submit">Save</button>
+          <td>
+            <form method="post"
+              onsubmit="return confirm('Are you sure you want to delete {{ i.name }}? This cannot be undone.');">
+              <input type="hidden" name="action" value="delete">
+              <input type="hidden" name="item_id" value="{{ i.id }}">
+              <button type="submit"
+                style="background:#d32f2f; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:pointer; font-size:11px;">Delete</button>
             </form>
           </td>
         </tr>
-      {% endfor %}
+        {% endfor %}
       </tbody>
     </table>
-  </div>
-
-  <div class="admin-actions">
-    <a class="secondary-link" href="{{ url_for('admin_dashboard') }}">Back to Admin</a>
   </div>
 </div>
 {% endblock %}

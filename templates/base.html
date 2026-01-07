@@ -1,36 +1,39 @@
 <!doctype html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Ice Land POS{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
-<header class="top-bar no-print">
-    <div class="brand">
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
-        <div>
-            <div class="shop-name">Ice Land</div>
-            <div class="shop-subtitle">Ice Cream & Sundaes</div>
+    <header class="top-bar no-print">
+        <div class="brand">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
+            <div>
+                <div class="shop-name">Ice Land</div>
+                <div class="shop-subtitle">Ice Cream & Sundaes</div>
+            </div>
         </div>
-    </div>
-    {% if user %}
-    <nav class="nav">
-        <a href="{{ url_for('pos') }}">POS</a>
-        {% if user.role == 'admin' %}
-        <a href="{{ url_for('admin_dashboard') }}">Admin</a>
-        <a href="{{ url_for('admin_items') }}">Prices</a>
-        <a href="{{ url_for('daily_report') }}">Daily Report</a>
-        <a href="{{ url_for('admin_bills_list') }}">Bills</a>
+        {% if user %}
+        <nav class="nav">
+            <a href="{{ url_for('pos') }}">POS</a>
+            {% if user.role == 'admin' %}
+            <a href="{{ url_for('admin_dashboard') }}">Admin</a>
+            <a href="{{ url_for('admin_items') }}">Prices</a>
+            <a href="{{ url_for('admin_reports') }}">Reports</a>
+            <a href="{{ url_for('admin_bills_list') }}">Bills</a>
+            {% endif %}
+            <span class="nav-user">Logged in as: {{ user.username }} ({{ user.role }})</span>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
         {% endif %}
-        <span class="nav-user">Logged in as: {{ user.username }} ({{ user.role }})</span>
-        <a href="{{ url_for('logout') }}">Logout</a>
-    </nav>
-    {% endif %}
-</header>
-<main class="main-container">
-    {% block content %}{% endblock %}
-</main>
+    </header>
+    <main class="main-container">
+        {% block content %}{% endblock %}
+    </main>
 </body>
+
 </html>

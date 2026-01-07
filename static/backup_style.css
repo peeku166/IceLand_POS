@@ -1,0 +1,787 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+    background: #f5f5f5;
+    color: #111;
+}
+
+a {
+    color: #111;
+    text-decoration: underline;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid #000;
+    background: #fff;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    border-radius: 4px;
+    border: 1px solid #000;
+    background: #fff;
+}
+
+.shop-name {
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.shop-subtitle {
+    font-size: 12px;
+    color: #555;
+}
+
+.nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+}
+
+.nav a {
+    text-decoration: none;
+    padding: 4px 8px;
+    border: 1px solid #000;
+    background: #fff;
+}
+
+.nav a:hover {
+    background: #000;
+    color: #fff;
+}
+
+.nav-user {
+    font-size: 12px;
+    color: #333;
+}
+
+.main-container {
+    padding: 16px;
+}
+
+/* Auth */
+
+.auth-box {
+    max-width: 360px;
+    margin: 60px auto;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #000;
+}
+
+.auth-box h2 {
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.auth-box label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.auth-box input {
+    width: 100%;
+    padding: 6px;
+    border: 1px solid #000;
+    background: #fff;
+}
+
+.auth-box button {
+    margin-top: 10px;
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #000;
+    background: #111;
+    color: #fff;
+    cursor: pointer;
+}
+
+.auth-box button:hover {
+    background: #fff;
+    color: #000;
+}
+
+.error {
+    margin-bottom: 10px;
+    padding: 6px;
+    border: 1px solid #000;
+    background: #fdd;
+    font-size: 13px;
+}
+
+.hint {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #555;
+}
+
+/* POS layout */
+
+.pos-container {
+    display: grid;
+    grid-template-columns: 1.4fr 1.1fr;
+    gap: 16px;
+}
+
+.menu-panel, .cart-panel {
+    background: #fff;
+    border: 1px solid #000;
+    padding: 12px;
+}
+
+.menu-panel h2, .cart-panel h2 {
+    margin-bottom: 8px;
+}
+
+#menu-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 75vh;
+    overflow-y: auto;
+}
+
+.menu-category {
+    border-top: 1px dashed #000;
+    padding-top: 8px;
+}
+
+.menu-category h3 {
+    font-size: 15px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.menu-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.menu-item-btn {
+    border: 1px solid #000;
+    background: #fff;
+    padding: 4px 6px;
+    font-size: 13px;
+    cursor: pointer;
+    min-width: 140px;
+    text-align: left;
+}
+
+.menu-item-btn span {
+    display: block;
+}
+
+.menu-item-name {
+    font-weight: 500;
+}
+
+.menu-item-price {
+    font-size: 11px;
+    color: #555;
+}
+
+.menu-item-btn:hover {
+    background: #000;
+    color: #fff;
+}
+
+/* Cart */
+
+.customer-name {
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.customer-name input {
+    width: 100%;
+    padding: 4px;
+    border: 1px solid #000;
+}
+
+#cart-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+#cart-table th, #cart-table td {
+    border: 1px solid #000;
+    padding: 4px;
+    text-align: left;
+}
+
+.cart-total {
+    margin-top: 6px;
+    font-weight: 600;
+    text-align: right;
+}
+
+.cart-actions, .reprint-actions {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cart-actions button,
+.reprint-actions button {
+    border: 1px solid #000;
+    background: #111;
+    color: #fff;
+    padding: 6px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.cart-actions button:hover,
+.reprint-actions button:hover {
+    background: #fff;
+    color: #000;
+}
+
+.secondary-btn {
+    background: #fff;
+    color: #000;
+}
+
+.secondary-btn:hover {
+    background: #000;
+    color: #fff;
+}
+
+.reprint-actions input {
+    width: 100%;
+    padding: 4px;
+    border: 1px solid #000;
+    margin-bottom: 4px;
+}
+
+/* Bill print container */
+
+.bill-print {
+    margin-top: 12px;
+    padding: 8px;
+    border: 1px dashed #000;
+    background: #fff;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+}
+
+/* Receipt layout inside bill-print */
+
+.receipt {
+    max-width: 280px;              /* feels like a thermal roll */
+    margin: 0 auto;
+    padding: 8px 4px;
+    border-top: 1px solid #000;
+    border-bottom: 1px solid #000;
+}
+
+.receipt-header {
+    text-align: center;
+    margin-bottom: 6px;
+}
+
+.receipt-logo-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.receipt-logo {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #000;
+    object-fit: contain;
+    background: #fff;
+}
+
+.receipt-title {
+    text-align: left;
+}
+
+.r-shop-name {
+    font-weight: 700;
+    letter-spacing: 1px;
+    font-size: 14px;
+}
+
+.r-shop-sub {
+    font-size: 10px;
+    color: #555;
+}
+
+.receipt-meta {
+    font-size: 10px;
+    text-align: left;
+    border-top: 1px dashed #000;
+    border-bottom: 1px dashed #000;
+    padding: 4px 0;
+    margin-top: 2px;
+}
+
+.receipt-meta div {
+    line-height: 1.2;
+}
+
+/* Items table in receipt */
+
+.receipt-items {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+    margin-top: 4px;
+}
+
+.receipt-items th,
+.receipt-items td {
+    border-bottom: 1px dotted #000;
+    padding: 2px 0;
+    text-align: right;
+}
+
+.receipt-items th:first-child,
+.receipt-items td:first-child {
+    text-align: left;
+}
+
+.receipt-items th {
+    border-top: 1px solid #000;
+    border-bottom: 1px solid #000;
+    font-weight: 600;
+}
+
+.r-item-name {
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.r-item-qty {
+    width: 20px;
+}
+
+.r-item-price {
+    width: 45px;
+}
+
+.r-item-total {
+    width: 50px;
+}
+
+/* Totals & footer */
+
+.receipt-footer {
+    margin-top: 4px;
+    font-size: 11px;
+}
+
+.receipt-total-row {
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid #000;
+    border-bottom: 1px solid #000;
+    padding: 4px 0;
+    margin-top: 2px;
+}
+
+.r-total-amt {
+    font-weight: 700;
+}
+
+.receipt-status {
+    margin-top: 4px;
+    font-weight: 600;
+}
+
+.receipt-thanks {
+    margin-top: 4px;
+    text-align: center;
+    font-size: 10px;
+}
+
+/* Reports */
+
+.report-container {
+    background: #fff;
+    border: 1px solid #000;
+    padding: 12px;
+}
+
+/* Generic panel (reused for admin pages) */
+
+.panel {
+    background: #fff;
+    border: 1px solid #000;
+    padding: 12px;
+}
+
+.table-wrap {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.inline-form {
+    margin: 0;
+}
+
+.price-input {
+    width: 100%;
+    padding: 4px;
+    border: 1px solid #000;
+    background: #fff;
+    font-size: 12px;
+}
+
+.admin-cards {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.admin-card {
+    display: block;
+    border: 1px solid #000;
+    padding: 10px;
+    background: #fff;
+    text-decoration: none;
+}
+
+.admin-card:hover {
+    background: #000;
+    color: #fff;
+}
+
+.admin-card-title {
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.admin-card-sub {
+    font-size: 12px;
+    color: #555;
+}
+
+.admin-card:hover .admin-card-sub {
+    color: #ddd;
+}
+
+.admin-actions {
+    margin-top: 10px;
+}
+
+.secondary-link {
+    display: inline-block;
+    border: 1px solid #000;
+    padding: 6px 10px;
+    text-decoration: none;
+    background: #fff;
+}
+
+.secondary-link:hover {
+    background: #000;
+    color: #fff;
+}
+
+/* Mobile responsiveness */
+
+@media (max-width: 900px) {
+    .top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .nav {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .pos-container {
+        grid-template-columns: 1fr;
+    }
+
+    #menu-container {
+        max-height: none;
+    }
+
+    .menu-item-btn {
+        min-width: 160px;
+        flex: 1 1 160px;
+    }
+
+    .admin-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .main-container {
+        padding: 10px;
+    }
+
+    .nav a {
+        padding: 6px 10px;
+    }
+
+    .menu-items {
+        flex-direction: column;
+    }
+
+    .menu-item-btn {
+        width: 100%;
+        min-width: 0;
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    /* Make report tables readable on phone */
+    .report-table thead {
+        display: none;
+    }
+
+    .report-table, .report-table tbody, .report-table tr, .report-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .report-table tr {
+        border: 1px solid #000;
+        margin-bottom: 8px;
+        padding: 6px;
+    }
+
+    .report-table td {
+        border: none;
+        padding: 4px 0;
+    }
+
+    .report-table td::before {
+        content: attr(data-label) ": ";
+        font-weight: 700;
+    }
+}
+
+.report-container h2 {
+    margin-bottom: 8px;
+}
+
+.report-container h3 {
+    margin-top: 12px;
+    margin-bottom: 4px;
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.report-table th, .report-table td {
+    border: 1px solid #000;
+    padding: 4px;
+    text-align: left;
+}
+
+.report-container form input,
+.report-container form button {
+    font-size: 12px;
+    padding: 4px;
+    border: 1px solid #000;
+    background: #fff;
+}
+
+.report-container form button {
+    background: #111;
+    color: #fff;
+    cursor: pointer;
+}
+
+.report-container form button:hover {
+    background: #fff;
+    color: #000;
+}
+
+.muted {
+    color: #777;
+    font-size: 11px;
+}
+
+/* Print styles */
+
+@media print {
+    body {
+        background: #fff;
+    }
+    .no-print,
+    .top-bar,
+    .menu-panel,
+    .customer-name,
+    #cart-table,
+    .cart-total,
+    .cart-actions,
+    .reprint-actions {
+        display: none !important;
+    }
+    .main-container {
+        padding: 0;
+        margin: 0;
+    }
+    .pos-container {
+        display: block;
+    }
+    .cart-panel {
+        border: none;
+        padding: 0;
+    }
+    .bill-print {
+        border: none;
+        margin: 0 auto;
+        padding: 0;
+    }
+    .receipt {
+        border: none;
+    }
+}
+
+
+/* =====================================
+   Responsive POS UI (Desktop + Mobile)
+   ===================================== */
+
+/* ---------- Base improvements (ALL screens) ---------- */
+
+.menu-item {
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 14px;
+  transition: box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.menu-item:hover {
+  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+  transform: translateY(-1px);
+}
+
+.menu-item h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.menu-item .meta {
+  font-size: 13px;
+  color: #666;
+}
+
+.menu-item .price {
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* ---------- Navigation (ALL screens) ---------- */
+
+.nav,
+.top-nav {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.nav a,
+.top-nav a,
+.nav button {
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* =====================================
+   MOBILE ADAPTATION
+   ===================================== */
+
+@media (max-width: 768px) {
+
+  body {
+    font-size: 15px;
+  }
+
+  /* Stack nav neatly */
+  .nav,
+  .top-nav {
+    gap: 6px;
+  }
+
+  .nav a,
+  .top-nav a,
+  .nav button {
+    flex: 1 1 48%;
+    text-align: center;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  /* Menu cards become full-width */
+  .menu-item {
+    padding: 16px;
+  }
+
+  .menu-item h4 {
+    font-size: 17px;
+  }
+
+  /* Better tap targets */
+  .menu-item button {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    margin-top: 8px;
+  }
+
+  /* Tables scroll instead of breaking */
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+}
+
+/* =====================================
+   LARGE SCREENS (Laptop / Desktop)
+   ===================================== */
+
+@media (min-width: 1024px) {
+
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+  }
+
+}

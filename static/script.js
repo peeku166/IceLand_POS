@@ -2,13 +2,32 @@ let ITEMS = [];
 let CART = {}; // key: item.id, value: {id, code, name, price, qty}
 
 async function loadItems() {
-  const res = await fetch('/api/items');
-  if (!res.ok) {
-    alert('Failed to load menu items');
-    return;
+  const container = document.getElementById('menu-container');
+  if (container) container.innerHTML = '<div style="padding:10px;">Loading menu items...</div>';
+
+  console.log("Fetching /api/items...");
+  try {
+    const res = await fetch('/api/items');
+    console.log("Response status:", res.status);
+
+    if (!res.ok) {
+      throw new Error('Server returned ' + res.status);
+    }
+
+    ITEMS = await res.json();
+    console.log("Items loaded:", ITEMS);
+
+    if (!ITEMS || ITEMS.length === 0) {
+      if (container) container.innerHTML = '<div style="padding:10px; color:red;">No items found in database.</div>';
+      return;
+    }
+
+    renderMenu();
+  } catch (e) {
+    console.error("Error loading items:", e);
+    if (container) container.innerHTML = `<div style="padding:10px; color:red;">Error: ${e.message}</div>`;
+    alert("Failed to load menu: " + e.message);
   }
-  ITEMS = await res.json();
-  renderMenu();
 }
 
 function groupByCategory(items) {
@@ -130,8 +149,8 @@ async function checkout() {
 
   const res = await fetch('/api/bills', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({customer_name, items})
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ customer_name, items })
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
@@ -159,21 +178,20 @@ function formatDateTime(isoString) {
 /**
  * Build a proper receipt layout in HTML instead of plain text
  */
+/* Updated Receipt HTML for Thermal Grid Layout */
 function fillPrintArea(bill) {
   const div = document.getElementById('bill-print-area');
   if (!div) return;
 
   const itemsRows = bill.items.map(it => {
-    const name = it.name;
-    const qty = it.qty;
-    const price = it.price.toFixed(2);
     const total = it.line_total.toFixed(2);
+    // Format: Name xQty  Total
+    // e.g. Vanilla x2  80.00
     return `
       <tr>
-        <td class="r-item-name">${name}</td>
-        <td class="r-item-qty">${qty}</td>
-        <td class="r-item-price">₹${price}</td>
-        <td class="r-item-total">₹${total}</td>
+        <td class="col-item">${it.name}</td>
+        <td class="col-qty">x${it.qty}</td>
+        <td class="col-price">${total}</td>
       </tr>
     `;
   }).join('');
@@ -181,47 +199,35 @@ function fillPrintArea(bill) {
   div.innerHTML = `
     <div class="receipt">
       <div class="receipt-header">
-        <div class="receipt-logo-row">
-          <img src="/static/logo.png" class="receipt-logo" alt="Logo">
-          <div class="receipt-title">
-            <div class="r-shop-name">ICE LAND</div>
-            <div class="r-shop-sub">Ice Cream & Sundaes</div>
-          </div>
-        </div>
+        <div class="r-shop-name">ICE LAND</div>
+        <div class="r-shop-sub">Ice Cream & Sundaes</div>
         <div class="receipt-meta">
-          <div>Bill No: <strong>${bill.seq_code || bill.bill_id}</strong></div>
-          <div>Date: ${formatDateTime(bill.created_at)}</div>
-          ${bill.customer_name ? `<div>Name: ${bill.customer_name}</div>` : ''}
-          ${bill.user ? `<div>Staff: ${bill.user}</div>` : ''}
+          <div>Bill: ${bill.seq_code || bill.bill_id}</div>
+          <div>${formatDateTime(bill.created_at)}</div>
+          ${bill.customer_name ? `<div>Cust: ${bill.customer_name}</div>` : ''}
         </div>
       </div>
-      <div class="receipt-body">
-        <table class="receipt-items">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th>Qty</th>
-              <th>Rate</th>
-              <th>Amt</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${itemsRows}
-          </tbody>
-        </table>
-      </div>
+      
+      <table class="receipt-items">
+        <thead>
+          <tr>
+            <th class="col-item">Item</th>
+            <th class="col-qty">Qty</th>
+            <th class="col-price">Amt</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsRows}
+        </tbody>
+      </table>
+
       <div class="receipt-footer">
         <div class="receipt-total-row">
-          <span>Total (incl. GST)</span>
-          <span class="r-total-amt">₹${bill.total_amount.toFixed(2)}</span>
+          <span>TOTAL</span>
+          <span>₹${bill.total_amount.toFixed(2)}</span>
         </div>
-        ${bill.status && bill.status !== 'ACTIVE' ? `
-        <div class="receipt-status">
-          STATUS: ${bill.status}
-        </div>` : ''}
-        <div class="receipt-thanks">
-          Thank you! Visit again.
-        </div>
+        ${bill.status && bill.status !== 'ACTIVE' ? `<div style="text-align:center; margin-top:5px">[${bill.status}]</div>` : ''}
+        <div class="receipt-thanks">Thank You!</div>
       </div>
     </div>
   `;
