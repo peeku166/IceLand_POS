@@ -147,21 +147,56 @@ async function checkout() {
   const nameInput = document.getElementById('customer-name');
   const customer_name = nameInput ? nameInput.value.trim() : '';
 
+  /* 1. Create Bill in Backend */
   const res = await fetch('/api/bills', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ customer_name, items })
   });
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     alert('Failed to create bill: ' + (err.error || res.statusText));
     return;
   }
+
   const bill = await res.json();
+
+  /* 2. Print Thermal Receipt */
   fillPrintArea(bill);
   window.print();
+
+  /* 3. Handle WhatsApp (if phone provided) */
+  const phone = document.getElementById('customer-phone').value.trim();
+  if (phone) {
+    // Construct Message
+    let msg = `*ICE LAND - Receipt*\n`;
+    msg += `Bill No: ${bill.seq_code}\n`;
+    msg += `Date: ${formatDateTime(bill.created_at)}\n`;
+    if (customer_name) msg += `Name: ${customer_name}\n`;
+    msg += `--------------------------------\n`;
+
+    bill.items.forEach(it => {
+      msg += `${it.name} x${it.qty} = ₹${it.line_total.toFixed(2)}\n`;
+    });
+
+    msg += `--------------------------------\n`;
+    msg += `*TOTAL: ₹${bill.total_amount.toFixed(2)}*\n`;
+    msg += `Thank you for visiting!`;
+
+    // Open WhatsApp
+    // Assuming Indian numbers, prepend 91 if length is 10
+    let targetPhone = phone.replace(/\D/g, ''); // strip non-digits
+    if (targetPhone.length === 10) targetPhone = '91' + targetPhone;
+
+    const waUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(msg)}`;
+    window.open(waUrl, '_blank');
+  }
+
+  /* 4. Cleanup */
   clearCart();
   if (nameInput) nameInput.value = '';
+  document.getElementById('customer-phone').value = '';
 }
 
 function formatDateTime(isoString) {

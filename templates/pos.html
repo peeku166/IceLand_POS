@@ -11,9 +11,12 @@
 
     <div class="cart-panel">
         <h2>Cart</h2>
-        <div class="customer-name">
-            <label>Customer Name (optional)
-                <input type="text" id="customer-name">
+        <div class="customer-name" style="display:flex; gap:10px;">
+            <label style="flex:1;">Customer Name
+                <input type="text" id="customer-name" placeholder="Optional">
+            </label>
+            <label style="flex:1;">Phone (WhatsApp)
+                <input type="number" id="customer-phone" placeholder="9876543210">
             </label>
         </div>
         <table id="cart-table">
