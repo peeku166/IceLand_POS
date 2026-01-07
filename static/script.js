@@ -184,18 +184,41 @@ async function checkout() {
     msg += `*TOTAL: ₹${bill.total_amount.toFixed(2)}*\n`;
     msg += `Thank you for visiting!`;
 
-    // Open WhatsApp
     // Assuming Indian numbers, prepend 91 if length is 10
     let targetPhone = phone.replace(/\D/g, ''); // strip non-digits
     if (targetPhone.length === 10) targetPhone = '91' + targetPhone;
 
     const waUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(msg)}`;
-    window.open(waUrl, '_blank');
+
+    // Attempt auto-open (might be blocked)
+    const waWindow = window.open(waUrl, '_blank');
+
+    // If blocked (or just as backup), show a button in the cart area
+    if (!waWindow || waWindow.closed || typeof waWindow.closed == 'undefined') {
+      const cartPanel = document.querySelector('.cart-panel');
+      let waBtn = document.getElementById('manual-wa-btn');
+      if (!waBtn) {
+        waBtn = document.createElement('a');
+        waBtn.id = 'manual-wa-btn';
+        waBtn.className = 'secondary-btn';
+        waBtn.style.cssText = 'display:block; text-align:center; padding:10px; margin-top:10px; background:#25D366 !important; color:white !important; text-decoration:none; font-weight:bold;';
+        waBtn.target = '_blank';
+        waBtn.textContent = 'Open WhatsApp (Popup Blocked)';
+        // Insert after checkout button
+        const actions = document.querySelector('.cart-actions');
+        if (actions) actions.appendChild(waBtn);
+      }
+      waBtn.href = waUrl;
+      waBtn.style.display = 'block';
+    }
   }
 
   /* 4. Cleanup */
   clearCart();
   if (nameInput) nameInput.value = '';
+  // Don't clear phone immediately if we showed a backup button, but usually we do.
+  // We'll leave the phone number for a moment or clear it?
+  // Let's clear it to be clean, the button has the href saved.
   document.getElementById('customer-phone').value = '';
 }
 
