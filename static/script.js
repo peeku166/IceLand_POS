@@ -135,19 +135,23 @@ function removeItem(itemId) {
   renderCart();
 }
 
-async function checkout() {
+
+// --- Refactored Checkout Logic ---
+
+async function createBill() {
   const items = Object.values(CART).map(r => ({
     item_id: r.id,
     qty: r.qty
   }));
   if (!items.length) {
     alert('Cart is empty');
-    return;
+    return null;
   }
   const nameInput = document.getElementById('customer-name');
   const customer_name = nameInput ? nameInput.value.trim() : '';
+  const phoneInput = document.getElementById('customer-phone');
+  // Store phone in a temporary variable if needed, but we read it from input in sendWhatsApp
 
-  /* 1. Create Bill in Backend */
   const res = await fetch('/api/bills', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -157,70 +161,89 @@ async function checkout() {
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     alert('Failed to create bill: ' + (err.error || res.statusText));
-    return;
+    return null;
   }
 
   const bill = await res.json();
+  return bill;
+}
 
-  /* 2. Print Thermal Receipt */
+function printBill(bill) {
   fillPrintArea(bill);
   window.print();
+}
 
-  /* 3. Handle WhatsApp (if phone provided) */
-  const phone = document.getElementById('customer-phone').value.trim();
-  if (phone) {
-    // Construct Message
-    let msg = `*ICE LAND - Receipt*\n`;
-    msg += `Bill No: ${bill.seq_code}\n`;
-    msg += `Date: ${formatDateTime(bill.created_at)}\n`;
-    if (customer_name) msg += `Name: ${customer_name}\n`;
-    msg += `--------------------------------\n`;
+function sendWhatsApp(bill) {
+  const phoneInput = document.getElementById('customer-phone');
+  // If we are doing "Last Bill" checkout, the input might be empty.
+  // We can try to rely on input but if empty maybe ask user? 
+  // For now, let's just ready from input. Ideally we should have saved phone on bill in backend.
+  // Since backend 'Bill' model doesn't seem to have phone, we rely on input value.
 
-    bill.items.forEach(it => {
-      msg += `${it.name} x${it.qty} = ₹${it.line_total.toFixed(2)}\n`;
-    });
-
-    msg += `--------------------------------\n`;
-    msg += `*TOTAL: ₹${bill.total_amount.toFixed(2)}*\n`;
-    msg += `Thank you for visiting!`;
-
-    // Assuming Indian numbers, prepend 91 if length is 10
-    let targetPhone = phone.replace(/\D/g, ''); // strip non-digits
-    if (targetPhone.length === 10) targetPhone = '91' + targetPhone;
-
-    const waUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(msg)}`;
-
-    // Attempt auto-open (might be blocked)
-    const waWindow = window.open(waUrl, '_blank');
-
-    // If blocked (or just as backup), show a button in the cart area
-    if (!waWindow || waWindow.closed || typeof waWindow.closed == 'undefined') {
-      const cartPanel = document.querySelector('.cart-panel');
-      let waBtn = document.getElementById('manual-wa-btn');
-      if (!waBtn) {
-        waBtn = document.createElement('a');
-        waBtn.id = 'manual-wa-btn';
-        waBtn.className = 'secondary-btn';
-        waBtn.style.cssText = 'display:block; text-align:center; padding:10px; margin-top:10px; background:#25D366 !important; color:white !important; text-decoration:none; font-weight:bold;';
-        waBtn.target = '_blank';
-        waBtn.textContent = 'Open WhatsApp (Popup Blocked)';
-        // Insert after checkout button
-        const actions = document.querySelector('.cart-actions');
-        if (actions) actions.appendChild(waBtn);
-      }
-      waBtn.href = waUrl;
-      waBtn.style.display = 'block';
-    }
+  let phone = '';
+  if (phoneInput && phoneInput.value.trim()) {
+    phone = phoneInput.value.trim();
+  } else {
+    // If no phone in input, maybe ask? 
+    // For simplified flow, we will alert if missing.
+    const p = prompt("Enter Customer Phone Number for WhatsApp", "");
+    if (p) phone = p.trim();
   }
 
-  /* 4. Cleanup */
-  clearCart();
-  if (nameInput) nameInput.value = '';
-  // Don't clear phone immediately if we showed a backup button, but usually we do.
-  // We'll leave the phone number for a moment or clear it?
-  // Let's clear it to be clean, the button has the href saved.
-  document.getElementById('customer-phone').value = '';
+  if (!phone) {
+    alert("Phone number is required for WhatsApp");
+    return;
+  }
+
+  // Construct Message
+  let msg = `*ICE LAND - Receipt*\n`;
+  msg += `Bill No: ${bill.seq_code}\n`;
+  msg += `Date: ${formatDateTime(bill.created_at)}\n`;
+  if (bill.customer_name) msg += `Name: ${bill.customer_name}\n`;
+  msg += `--------------------------------\n`;
+
+  bill.items.forEach(it => {
+    msg += `${it.name} x${it.qty} = ₹${it.line_total.toFixed(2)}\n`;
+  });
+
+  msg += `--------------------------------\n`;
+  msg += `*TOTAL: ₹${bill.total_amount.toFixed(2)}*\n`;
+  msg += `Thank you for visiting!`;
+
+  // Assuming Indian numbers, prepend 91 if length is 10
+  let targetPhone = phone.replace(/\D/g, ''); // strip non-digits
+  if (targetPhone.length === 10) targetPhone = '91' + targetPhone;
+
+  const waUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(msg)}`;
+
+  // Attempt auto-open
+  window.open(waUrl, '_blank');
 }
+
+async function handlePrintCheckout() {
+  const bill = await createBill();
+  if (!bill) return;
+  printBill(bill);
+  finishCheckout();
+}
+
+async function handleWACheckout() {
+  const bill = await createBill();
+  if (!bill) return;
+  sendWhatsApp(bill);
+  finishCheckout();
+}
+
+function finishCheckout() {
+  clearCart();
+  const nameInput = document.getElementById('customer-name');
+  if (nameInput) nameInput.value = '';
+  // Keep phone number for a moment or clear? 
+  // Let's clear to be clean.
+  const phoneInput = document.getElementById('customer-phone');
+  if (phoneInput) phoneInput.value = '';
+}
+
 
 function formatDateTime(isoString) {
   const dt = new Date(isoString);
@@ -291,16 +314,27 @@ function fillPrintArea(bill) {
   `;
 }
 
-async function reopenLastBill() {
+// --- Last Bill Actions ---
+
+async function fetchLastBill() {
   const res = await fetch('/api/bills/last');
   if (!res.ok) {
     alert('No previous bills found');
-    return;
+    return null;
   }
-  const bill = await res.json();
-  fillPrintArea(bill);
-  window.print();
+  return await res.json();
 }
+
+async function lastBillPrint() {
+  const bill = await fetchLastBill();
+  if (bill) printBill(bill);
+}
+
+async function lastBillWA() {
+  const bill = await fetchLastBill();
+  if (bill) sendWhatsApp(bill);
+}
+
 
 async function reprintByCode() {
   const input = document.getElementById('reprint-code');
@@ -327,11 +361,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const clearBtn = document.getElementById('clear-cart');
   if (clearBtn) clearBtn.addEventListener('click', clearCart);
 
-  const checkoutBtn = document.getElementById('checkout');
-  if (checkoutBtn) checkoutBtn.addEventListener('click', checkout);
+  /* New Buttons */
+  const btnPrint = document.getElementById('btn-print-checkout');
+  if (btnPrint) btnPrint.addEventListener('click', handlePrintCheckout);
 
-  const lastBtn = document.getElementById('reopen-last');
-  if (lastBtn) lastBtn.addEventListener('click', reopenLastBill);
+  const btnWA = document.getElementById('btn-wa-checkout');
+  if (btnWA) btnWA.addEventListener('click', handleWACheckout);
+
+  const btnLastPrint = document.getElementById('last-print-btn');
+  if (btnLastPrint) btnLastPrint.addEventListener('click', lastBillPrint);
+
+  const btnLastWA = document.getElementById('last-wa-btn');
+  if (btnLastWA) btnLastWA.addEventListener('click', lastBillWA);
+
 
   const reprintBtn = document.getElementById('reprint-btn');
   if (reprintBtn) reprintBtn.addEventListener('click', reprintByCode);

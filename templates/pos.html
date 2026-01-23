@@ -37,12 +37,17 @@
             Total (incl. GST): ₹<span id="cart-total-amount">0.00</span>
         </div>
         <div class="cart-actions no-print">
-            <button id="clear-cart">Clear</button>
-            <button id="checkout">Print Bill</button>
+            <button id="btn-print-checkout">Print Bill</button>
+            <button id="btn-wa-checkout" style="background-color: #25D366; color: white;">Send WhatsApp</button>
         </div>
 
         <div class="reprint-actions no-print">
-            <button id="reopen-last" class="secondary-btn">Reopen &amp; Print Last Bill</button>
+            <h3>Last Bill Options</h3>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <button id="last-print-btn" class="secondary-btn" style="flex:1">Print Last</button>
+                <button id="last-wa-btn" class="secondary-btn"
+                    style="flex:1; background-color: #25D366; color: white;">WhatsApp Last</button>
+            </div>
             <div>
                 <input id="reprint-code" type="text" placeholder="Bill No (e.g. IL00005)">
                 <button id="reprint-btn" class="secondary-btn">Reprint Bill</button>
