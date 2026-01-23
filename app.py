@@ -240,7 +240,7 @@ def serialize_bill(bill: Bill):
     return {
         'bill_id': bill.id,
         'seq_code': bill.seq_code,
-        'created_at': bill.created_at.isoformat(),
+        'created_at': bill.created_at.isoformat() + 'Z',
         'customer_name': bill.customer_name,
         'total_amount': bill.total_amount,
         'status': bill.status,

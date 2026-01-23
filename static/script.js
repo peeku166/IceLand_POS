@@ -138,11 +138,14 @@ function removeItem(itemId) {
 
 // --- Refactored Checkout Logic ---
 
+
 async function createBill() {
+  console.log("createBill called");
   const items = Object.values(CART).map(r => ({
     item_id: r.id,
     qty: r.qty
   }));
+
   if (!items.length) {
     alert('Cart is empty');
     return null;
@@ -220,19 +223,45 @@ function sendWhatsApp(bill) {
   window.open(waUrl, '_blank');
 }
 
+
 async function handlePrintCheckout() {
-  const bill = await createBill();
-  if (!bill) return;
-  printBill(bill);
-  finishCheckout();
+  const btn = document.getElementById('btn-print-checkout');
+  if (btn) btn.disabled = true;
+
+  try {
+    const bill = await createBill();
+    if (!bill) {
+      if (btn) btn.disabled = false;
+      return;
+    }
+    printBill(bill);
+    finishCheckout();
+  } catch (e) {
+    console.error(e);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 async function handleWACheckout() {
-  const bill = await createBill();
-  if (!bill) return;
-  sendWhatsApp(bill);
-  finishCheckout();
+  const btn = document.getElementById('btn-wa-checkout');
+  if (btn) btn.disabled = true;
+
+  try {
+    const bill = await createBill();
+    if (!bill) {
+      if (btn) btn.disabled = false;
+      return;
+    }
+    sendWhatsApp(bill);
+    finishCheckout();
+  } catch (e) {
+    console.error(e);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
+
 
 function finishCheckout() {
   clearCart();
