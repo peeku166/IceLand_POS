@@ -1,5 +1,6 @@
 let ITEMS = [];
-let CART = {}; // key: item.id, value: {id, code, name, price, qty}
+let CART = {}; // key: cartKey, value: {id, code, name, price, qty, custom_flavors: [{flavor_id, qty}]}
+let CLASSIC_FLAVORS = [];
 
 async function loadItems() {
   const container = document.getElementById('menu-container');
@@ -8,13 +9,14 @@ async function loadItems() {
   console.log("Fetching /api/items...");
   try {
     const res = await fetch('/api/items');
-    console.log("Response status:", res.status);
-
-    if (!res.ok) {
-      throw new Error('Server returned ' + res.status);
+    const flavorsRes = await fetch('/api/flavors/classic');
+    
+    if (!res.ok || !flavorsRes.ok) {
+      throw new Error('Server returned error');
     }
 
     ITEMS = await res.json();
+    CLASSIC_FLAVORS = await flavorsRes.json();
     console.log("Items loaded:", ITEMS);
 
     if (!ITEMS || ITEMS.length === 0) {
@@ -71,26 +73,39 @@ function renderMenu() {
   });
 }
 
-function addToCart(item) {
-  if (!CART[item.id]) {
-    CART[item.id] = {
+function addToCart(item, customFlavors = null) {
+  let cartKey = item.id.toString();
+  
+  if (item.name.includes("5 Wonders") || item.name.includes("7 Wonders")) {
+    if (!customFlavors) {
+      // Need to prompt for flavors
+      openCustomFlavorModal(item);
+      return;
+    }
+    // Generate unique key for this custom item
+    cartKey = item.id + '_' + Date.now();
+  }
+
+  if (!CART[cartKey]) {
+    CART[cartKey] = {
       id: item.id,
       code: item.code,
       name: item.name,
       price: item.price,
-      qty: 0
+      qty: 0,
+      custom_flavors: customFlavors || []
     };
   }
-  CART[item.id].qty += 1;
+  CART[cartKey].qty += 1;
   renderCart();
 }
 
-function changeQty(itemId, delta) {
-  const row = CART[itemId];
+function changeQty(cartKey, delta) {
+  const row = CART[cartKey];
   if (!row) return;
   row.qty += delta;
   if (row.qty <= 0) {
-    delete CART[itemId];
+    delete CART[cartKey];
   }
   renderCart();
 }
@@ -108,21 +123,27 @@ function renderCart() {
   tbody.innerHTML = '';
   let total = 0;
 
-  Object.values(CART).forEach(row => {
+  Object.keys(CART).forEach(cartKey => {
+    const row = CART[cartKey];
     const tr = document.createElement('tr');
     const lineTotal = row.qty * row.price;
     total += lineTotal;
+    
+    let flavorText = '';
+    if (row.custom_flavors && row.custom_flavors.length > 0) {
+      flavorText = '<br><small style="color:#666;">' + row.custom_flavors.map(cf => cf.qty + 'x ' + cf.flavor_name).join(', ') + '</small>';
+    }
 
     tr.innerHTML = `
       <td>${row.code}</td>
-      <td>${row.name}</td>
+      <td>${row.name}${flavorText}</td>
       <td>
-        <button type="button" onclick="changeQty(${row.id}, -1)">-</button>
+        <button type="button" onclick="changeQty('${cartKey}', -1)">-</button>
         ${row.qty}
-        <button type="button" onclick="changeQty(${row.id}, 1)">+</button>
+        <button type="button" onclick="changeQty('${cartKey}', 1)">+</button>
       </td>
       <td>₹${lineTotal.toFixed(2)}</td>
-      <td><button type="button" onclick="removeItem(${row.id})">x</button></td>
+      <td><button type="button" onclick="removeItem('${cartKey}')">x</button></td>
     `;
     tbody.appendChild(tr);
   });
@@ -143,7 +164,8 @@ async function createBill() {
   console.log("createBill called");
   const items = Object.values(CART).map(r => ({
     item_id: r.id,
-    qty: r.qty
+    qty: r.qty,
+    custom_flavors: r.custom_flavors
   }));
 
   if (!items.length) {
@@ -295,11 +317,13 @@ function fillPrintArea(bill) {
 
   const itemsRows = bill.items.map(it => {
     const total = it.line_total.toFixed(2);
-    // Format: Name xQty  Total
-    // e.g. Vanilla x2  80.00
+    let fText = '';
+    if (it.custom_flavors && it.custom_flavors.length > 0) {
+      fText = '<div style="font-size:0.8em; color:#555;">' + it.custom_flavors.map(cf => cf.qty + 'x ' + cf.name).join(', ') + '</div>';
+    }
     return `
       <tr>
-        <td class="col-item">${it.name}</td>
+        <td class="col-item">${it.name}${fText}</td>
         <td class="col-qty">x${it.qty}</td>
         <td class="col-price">${total}</td>
       </tr>
@@ -406,4 +430,94 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const reprintBtn = document.getElementById('reprint-btn');
   if (reprintBtn) reprintBtn.addEventListener('click', reprintByCode);
+});
+
+// --- Custom Flavor Modal Logic ---
+let targetScoopCount = 0;
+let currentCustomItem = null;
+
+function openCustomFlavorModal(item) {
+  currentCustomItem = item;
+  targetScoopCount = item.name.includes("7 Wonders") ? 7 : 5;
+  
+  document.getElementById('custom-flavor-target').innerText = targetScoopCount;
+  document.getElementById('custom-flavor-target-display').innerText = targetScoopCount;
+  document.getElementById('custom-flavor-count').innerText = 0;
+  
+  const list = document.getElementById('custom-flavor-list');
+  list.innerHTML = '';
+  
+  CLASSIC_FLAVORS.forEach(f => {
+    const div = document.createElement('div');
+    div.style = "display:flex; justify-content:space-between; margin-bottom:5px; align-items:center;";
+    div.innerHTML = `
+      <span>${f.name}</span>
+      <div>
+        <button class="qty-btn minus" data-id="${f.id}" type="button" style="width:25px;">-</button>
+        <span class="f-qty" data-id="${f.id}" data-name="${f.name}" style="display:inline-block; width:20px; text-align:center;">0</span>
+        <button class="qty-btn plus" data-id="${f.id}" type="button" style="width:25px;">+</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+  
+  document.getElementById('custom-flavor-modal').style.display = 'flex';
+  updateFlavorModalState();
+  
+  // Attach event listeners to new buttons
+  document.querySelectorAll('.qty-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const id = this.getAttribute('data-id');
+      const span = document.querySelector(`.f-qty[data-id="${id}"]`);
+      let qty = parseInt(span.innerText);
+      
+      if (this.classList.contains('plus')) {
+        qty++;
+      } else if (qty > 0) {
+        qty--;
+      }
+      
+      span.innerText = qty;
+      updateFlavorModalState();
+    });
+  });
+}
+
+function updateFlavorModalState() {
+  let total = 0;
+  document.querySelectorAll('.f-qty').forEach(span => {
+    total += parseInt(span.innerText);
+  });
+  
+  document.getElementById('custom-flavor-count').innerText = total;
+  
+  const confirmBtn = document.getElementById('custom-flavor-confirm');
+  if (total === targetScoopCount) {
+    confirmBtn.disabled = false;
+  } else {
+    confirmBtn.disabled = true;
+  }
+}
+
+document.getElementById('custom-flavor-cancel')?.addEventListener('click', () => {
+  document.getElementById('custom-flavor-modal').style.display = 'none';
+});
+
+document.getElementById('custom-flavor-confirm')?.addEventListener('click', () => {
+  if (document.getElementById('custom-flavor-confirm').disabled) return;
+  
+  const customFlavors = [];
+  document.querySelectorAll('.f-qty').forEach(span => {
+    const qty = parseInt(span.innerText);
+    if (qty > 0) {
+      customFlavors.push({
+        flavor_id: span.getAttribute('data-id'),
+        flavor_name: span.getAttribute('data-name'),
+        qty: qty
+      });
+    }
+  });
+  
+  document.getElementById('custom-flavor-modal').style.display = 'none';
+  addToCart(currentCustomItem, customFlavors);
 });

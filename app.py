@@ -80,6 +80,44 @@ class BillItem(db.Model):
     item = db.relationship('Item')
 
 
+class Flavor(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+
+
+class InventoryTub(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    flavor_id = db.Column(db.Integer, db.ForeignKey('flavor.id'), nullable=False)
+    status = db.Column(db.String(20), default='FRIDGE', nullable=False)  # FRIDGE, OPEN, EMPTY
+    scoops_used = db.Column(db.Integer, default=0, nullable=False)
+    added_at = db.Column(db.DateTime, default=datetime.utcnow)
+    opened_at = db.Column(db.DateTime)
+    emptied_at = db.Column(db.DateTime)
+
+    flavor = db.relationship('Flavor')
+
+
+class RecipeMapping(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False)
+    flavor_id = db.Column(db.Integer, db.ForeignKey('flavor.id'), nullable=False)
+    scoop_count = db.Column(db.Float, nullable=False)
+
+    item = db.relationship('Item')
+    flavor = db.relationship('Flavor')
+
+
+class BillItemCustomFlavor(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    bill_item_id = db.Column(db.Integer, db.ForeignKey('bill_item.id'), nullable=False)
+    flavor_id = db.Column(db.Integer, db.ForeignKey('flavor.id'), nullable=False)
+    scoop_count = db.Column(db.Float, nullable=False)
+
+    bill_item = db.relationship('BillItem', backref='custom_flavors')
+    flavor = db.relationship('Flavor')
+
+
+
 # ---------- Seed data ----------
 
 def seed_data():
@@ -99,11 +137,11 @@ def seed_data():
             # If hashing format differs, do not block startup.
             pass
 
-    # Seed staff user Amar if not exists
-    if not User.query.filter_by(username='amar').first():
-        amar = User(username='amar', role='staff')
-        amar.set_password('amar123')
-        db.session.add(amar)
+    # Seed staff user if not exists
+    if not User.query.filter_by(username='staff').first():
+        staff = User(username='staff', role='staff')
+        staff.set_password('staff123')
+        db.session.add(staff)
 
     # Seed menu items (with product codes)
     if Item.query.count() == 0:
@@ -151,6 +189,10 @@ def seed_data():
             ('SU-008', 'Sundaes', 'Red Velvet Love', 70),
             ('SU-009', 'Sundaes', 'Purple Velvet Magic', 70),
             ('SU-010', 'Sundaes', 'Chocovelvet Bliss', 70),
+            ('SU-011', 'Sundaes', 'Cookies Cream', 120),
+            ('SU-012', 'Sundaes', 'Gajar Halva', 100),
+            ('SU-013', 'Sundaes', 'Hot Coffee Sundae', 120),
+            ('SU-014', 'Sundaes', 'Hot Scoch', 120),
 
             # Cones
             ('CO-001', 'Cones', 'Nutty Vanilla Cone', 90),
@@ -175,6 +217,77 @@ def seed_data():
 
         for code, cat, name, price in items:
             db.session.add(Item(product_code=code, category=cat, name=name, price=price))
+        db.session.commit()
+
+    # Seed Flavors
+    if Flavor.query.count() == 0:
+        flavors = [
+            'Vanilla', 'Chocolate', 'Strawberry', 'Mango', 'Butterscotch',
+            'Coffee', 'Pista', 'Vanilla-Strawberry', 'Vanilla-Chocolate',
+            'Blackcurrant', 'Pineapple', 'Guava', 'Lychee', 'Fig & Honey',
+            'Peach', 'Sitaphal', 'Redvelvet', 'Blueberry', 'Avocado',
+            'Tender Coconut', 'Passion Fruit', 'Jackfruit', 'Kiwi',
+            'Kesar Badam', 'Oreo', 'Cheesecake', 'Spanish Delight'
+        ]
+        for f in flavors:
+            db.session.add(Flavor(name=f))
+        db.session.commit()
+
+    # Seed Recipes
+    if RecipeMapping.query.count() == 0:
+        def add_recipe(product_code, flavor_name, scoop_count):
+            item = Item.query.filter_by(product_code=product_code).first()
+            flavor = Flavor.query.filter_by(name=flavor_name).first()
+            if item and flavor:
+                db.session.add(RecipeMapping(item_id=item.id, flavor_id=flavor.id, scoop_count=scoop_count))
+        
+        # Scoop Recipes
+        add_recipe('SC-001', 'Vanilla', 1)
+        add_recipe('SC-002', 'Chocolate', 1)
+        add_recipe('SC-003', 'Strawberry', 1)
+        add_recipe('SC-004', 'Mango', 1)
+        add_recipe('SC-005', 'Butterscotch', 1)
+        add_recipe('SC-006', 'Coffee', 1)
+        add_recipe('SC-007', 'Pista', 1)
+        add_recipe('SC-008', 'Vanilla-Strawberry', 1)
+        add_recipe('SC-009', 'Vanilla-Chocolate', 1)
+        add_recipe('SC-010', 'Blackcurrant', 1)
+        add_recipe('SC-011', 'Pineapple', 1)
+        add_recipe('SC-012', 'Guava', 1)
+        add_recipe('SC-013', 'Lychee', 1)
+        add_recipe('SC-014', 'Fig & Honey', 1)
+        add_recipe('SC-015', 'Peach', 1)
+        add_recipe('SC-016', 'Sitaphal', 1)
+        add_recipe('SC-017', 'Redvelvet', 1)
+        add_recipe('SC-018', 'Blueberry', 1)
+        add_recipe('SC-019', 'Avocado', 1)
+        add_recipe('SC-020', 'Tender Coconut', 1)
+        add_recipe('SC-021', 'Passion Fruit', 1)
+        add_recipe('SC-022', 'Jackfruit', 1)
+        add_recipe('SC-023', 'Kiwi', 1)
+        add_recipe('SC-024', 'Kesar Badam', 1)
+        add_recipe('SC-025', 'Oreo', 1)
+        add_recipe('SC-026', 'Cheesecake', 1)
+        add_recipe('SC-027', 'Spanish Delight', 1)
+        
+        # Sundae Recipes
+        add_recipe('SU-001', 'Vanilla', 1)
+        add_recipe('SU-001', 'Chocolate', 1)
+        add_recipe('SU-002', 'Vanilla', 2)
+        # 5 and 7 wonders are dynamic, no static recipe
+        add_recipe('SU-005', 'Coffee', 2)
+        add_recipe('SU-006', 'Blueberry', 2)
+        add_recipe('SU-007', 'Vanilla', 2)  # Oreo Cookies & Cream Crush
+        add_recipe('SU-008', 'Redvelvet', 1)
+        add_recipe('SU-009', 'Blackcurrant', 1)
+        add_recipe('SU-010', 'Chocolate', 1)
+        add_recipe('SU-011', 'Vanilla', 1)  # Cookies Cream
+        add_recipe('SU-011', 'Butterscotch', 1)
+        add_recipe('SU-012', 'Vanilla', 1)  # Gajar Halva
+        add_recipe('SU-013', 'Coffee', 2)   # Hot Coffee Sundae
+        add_recipe('SU-014', 'Butterscotch', 2) # Hot Scoch
+
+        db.session.commit()
 
     # Ensure Cone exists even if DB already had items seeded earlier
     cone = Item.query.filter_by(product_code='EX-003').first()
@@ -255,6 +368,7 @@ def serialize_bill(bill: Bill):
                 'qty': bi.quantity,
                 'refunded_qty': bi.refunded_qty,
                 'line_total': bi.line_total,
+                'custom_flavors': [{'name': cf.flavor.name, 'qty': cf.scoop_count} for cf in bi.custom_flavors]
             }
             for bi in bill.items
         ],
@@ -563,13 +677,23 @@ def api_items():
     ]
     return jsonify(data)
 
+@app.route('/api/flavors/classic')
+@login_required
+def api_classic_flavors():
+    """Return a list of classic flavors for 5/7 Wonders popup."""
+    # Assuming the first 10 flavors are classic
+    flavors = Flavor.query.order_by(Flavor.name).all()
+    # We can filter if needed, but for now return all to let user choose
+    return jsonify([{'id': f.id, 'name': f.name} for f in flavors])
+
+
 
 @app.route('/api/bills', methods=['POST'])
 @login_required
 def api_create_bill():
     payload = request.get_json(force=True)
     customer_name = payload.get('customer_name', '').strip()
-    items_data = payload.get('items', [])  # list of {item_id, qty}
+    items_data = payload.get('items', [])  # list of {item_id, qty, custom_flavors: [{flavor_id, qty}]}
 
     if not items_data:
         return jsonify({'error': 'No items in bill'}), 400
@@ -581,6 +705,7 @@ def api_create_bill():
     for entry in items_data:
         item_id = entry.get('item_id')
         qty = int(entry.get('qty', 0))
+        custom_flavors = entry.get('custom_flavors', [])
         if qty <= 0:
             continue
         item = Item.query.get(item_id)
@@ -588,10 +713,35 @@ def api_create_bill():
             continue
         line_total = item.price * qty
         total += line_total
-        bill_items.append((item, qty, line_total))
+        bill_items.append((item, qty, line_total, custom_flavors))
 
     if not bill_items:
         return jsonify({'error': 'No valid items'}), 400
+
+    def get_open_tub(flavor_id):
+        # Find open tub
+        return InventoryTub.query.filter_by(flavor_id=flavor_id, status='OPEN').order_by(InventoryTub.opened_at).first()
+
+    # Pre-flight check: ensure all required flavors have an open tub
+    required_flavors = set()
+    for item, qty, line_total, custom_flavors in bill_items:
+        if custom_flavors:
+            for cf in custom_flavors:
+                required_flavors.add(int(cf.get('flavor_id')))
+        else:
+            recipes = RecipeMapping.query.filter_by(item_id=item.id).all()
+            for recipe in recipes:
+                required_flavors.add(recipe.flavor_id)
+
+    missing_flavors = []
+    for f_id in required_flavors:
+        if not get_open_tub(f_id):
+            flavor = Flavor.query.get(f_id)
+            if flavor:
+                missing_flavors.append(flavor.name)
+
+    if missing_flavors:
+        return jsonify({'error': f'No open tub for flavor(s): {", ".join(missing_flavors)}. Please ask admin to open a packet.'}), 400
 
     user = get_current_user()
     bill = Bill(
@@ -607,8 +757,28 @@ def api_create_bill():
     if not bill.seq_code:
         bill.seq_code = f"IL{bill.id:05d}"
 
-    for item, qty, line_total in bill_items:
-        db.session.add(BillItem(bill_id=bill.id, item_id=item.id, quantity=qty, line_total=line_total))
+    for item, qty, line_total, custom_flavors in bill_items:
+        bi = BillItem(bill_id=bill.id, item_id=item.id, quantity=qty, line_total=line_total)
+        db.session.add(bi)
+        db.session.flush() # get bi.id
+        
+        # Add custom flavors if any
+        if custom_flavors:
+            for cf in custom_flavors:
+                flavor_id = int(cf.get('flavor_id'))
+                scoop_qty = float(cf.get('qty'))
+                db.session.add(BillItemCustomFlavor(bill_item_id=bi.id, flavor_id=flavor_id, scoop_count=scoop_qty))
+                # Deduct inventory for custom flavors
+                tub = get_open_tub(flavor_id)
+                if tub:
+                    tub.scoops_used += (scoop_qty * qty)
+        else:
+            # Look up standard recipe and deduct inventory
+            recipes = RecipeMapping.query.filter_by(item_id=item.id).all()
+            for recipe in recipes:
+                tub = get_open_tub(recipe.flavor_id)
+                if tub:
+                    tub.scoops_used += (recipe.scoop_count * qty)
 
     db.session.commit()
 
@@ -739,6 +909,56 @@ def admin_refund_bill_item(bill_id, bill_item_id):
 
     # Browser form: go back to bill detail
     return redirect(url_for('admin_bill_detail', bill_id=bill.id))
+
+
+@app.route('/admin/inventory', methods=['GET'])
+@login_required
+def admin_inventory():
+    """View inventory status."""
+    user = get_current_user()
+    
+    flavors = Flavor.query.order_by(Flavor.name).all()
+    inventory_data = []
+    
+    for f in flavors:
+        fridge_count = InventoryTub.query.filter_by(flavor_id=f.id, status='FRIDGE').count()
+        open_tubs = InventoryTub.query.filter_by(flavor_id=f.id, status='OPEN').order_by(InventoryTub.opened_at.desc()).all()
+        inventory_data.append({
+            'flavor': f,
+            'fridge_count': fridge_count,
+            'open_tubs': open_tubs
+        })
+        
+    return render_template('admin_inventory.html', user=user, inventory_data=inventory_data, flavors=flavors)
+
+@app.route('/admin/inventory/add', methods=['POST'])
+@login_required
+def admin_inventory_add():
+    """Add new tubs to fridge."""
+    flavor_id = int(request.form.get('flavor_id', 0))
+    qty = int(request.form.get('qty', 0))
+    
+    if flavor_id and qty > 0:
+        for _ in range(qty):
+            db.session.add(InventoryTub(flavor_id=flavor_id, status='FRIDGE'))
+        db.session.commit()
+        
+    return redirect(url_for('admin_inventory'))
+
+@app.route('/admin/inventory/open', methods=['POST'])
+@login_required
+def admin_inventory_open():
+    """Open a tub from the fridge."""
+    flavor_id = int(request.form.get('flavor_id', 0))
+    if flavor_id:
+        tub = InventoryTub.query.filter_by(flavor_id=flavor_id, status='FRIDGE').order_by(InventoryTub.added_at).first()
+        if tub:
+            tub.status = 'OPEN'
+            tub.opened_at = datetime.utcnow()
+            db.session.commit()
+            
+    return redirect(url_for('admin_inventory'))
+
 
 
 

@@ -20,6 +20,7 @@
         {% if user %}
         <nav class="nav">
             <a href="{{ url_for('pos') }}">POS</a>
+            <a href="{{ url_for('admin_inventory') }}">Inventory</a>
             {% if user.role == 'admin' %}
             <a href="{{ url_for('admin_dashboard') }}">Admin</a>
             <a href="{{ url_for('admin_items') }}">Prices</a>
