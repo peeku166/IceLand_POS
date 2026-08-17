@@ -959,6 +959,43 @@ def admin_inventory_open():
             
     return redirect(url_for('admin_inventory'))
 
+@app.route('/admin/inventory/delete', methods=['POST'])
+@admin_required
+def admin_inventory_delete():
+    """Delete a single tub from the fridge (Admin only)."""
+    flavor_id = int(request.form.get('flavor_id', 0))
+    if flavor_id:
+        tub = InventoryTub.query.filter_by(flavor_id=flavor_id, status='FRIDGE').order_by(InventoryTub.added_at.desc()).first()
+        if tub:
+            db.session.delete(tub)
+            db.session.commit()
+            
+    return redirect(url_for('admin_inventory'))
+
+@app.route('/admin/inventory/empty', methods=['POST'])
+@admin_required
+def admin_inventory_empty():
+    """Mark an open tub as empty (Admin only)."""
+    tub_id = int(request.form.get('tub_id', 0))
+    if tub_id:
+        tub = InventoryTub.query.get(tub_id)
+        if tub and tub.status == 'OPEN':
+            tub.status = 'EMPTY'
+            tub.emptied_at = datetime.utcnow()
+            db.session.commit()
+            
+    return redirect(url_for('admin_inventory'))
+
+@app.route('/admin/inventory/history', methods=['GET'])
+@admin_required
+def admin_history():
+    """View history of emptied tubs (Admin only)."""
+    user = get_current_user()
+    
+    empty_tubs = InventoryTub.query.filter_by(status='EMPTY').order_by(InventoryTub.emptied_at.desc()).all()
+    
+    return render_template('admin_history.html', user=user, empty_tubs=empty_tubs)
+
 
 
 

@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Inventory History - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>Inventory History</h2>
+        <a href="{{ url_for('admin_inventory') }}" class="primary-btn" style="text-decoration: none;">Back to Inventory</a>
+    </div>
+
+    <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <p class="muted">List of previously opened packs (tubs) that have been marked as empty.</p>
+        
+        <table class="data-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr>
+                    <th style="padding: 10px; border-bottom: 1px solid #ccc;">Flavor</th>
+                    <th style="padding: 10px; border-bottom: 1px solid #ccc;">Added to Fridge</th>
+                    <th style="padding: 10px; border-bottom: 1px solid #ccc;">Opened At</th>
+                    <th style="padding: 10px; border-bottom: 1px solid #ccc;">Emptied At</th>
+                    <th style="padding: 10px; border-bottom: 1px solid #ccc;">Total Scoops Used</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if empty_tubs %}
+                    {% for tub in empty_tubs %}
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>{{ tub.flavor.name }}</strong></td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">
+                            {{ tub.added_at.strftime('%Y-%m-%d %H:%M') if tub.added_at else 'Unknown' }}
+                        </td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">
+                            {{ tub.opened_at.strftime('%Y-%m-%d %H:%M') if tub.opened_at else 'Unknown' }}
+                        </td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">
+                            {{ tub.emptied_at.strftime('%Y-%m-%d %H:%M') if tub.emptied_at else 'Unknown' }}
+                        </td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">
+                            <strong>{{ tub.scoops_used }}</strong>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" style="padding: 20px; text-align: center; color: #888;">No empty tubs found in history.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .primary-btn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .primary-btn:hover {
+        background-color: #0056b3;
+    }
+    .data-table th, .data-table td {
+        padding: 12px;
+    }
+</style>
+{% endblock %}
