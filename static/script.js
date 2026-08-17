@@ -246,6 +246,25 @@ function sendWhatsApp(bill) {
 }
 
 
+async function handleSaveCheckout() {
+  const btn = document.getElementById('btn-save-checkout');
+  if (btn) btn.disabled = true;
+
+  try {
+    const bill = await createBill();
+    if (!bill) {
+      if (btn) btn.disabled = false;
+      return;
+    }
+    alert('Bill ' + bill.seq_code + ' saved successfully!');
+    finishCheckout();
+  } catch (e) {
+    console.error(e);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
 async function handlePrintCheckout() {
   const btn = document.getElementById('btn-print-checkout');
   if (btn) btn.disabled = true;
@@ -415,6 +434,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (clearBtn) clearBtn.addEventListener('click', clearCart);
 
   /* New Buttons */
+  const btnSave = document.getElementById('btn-save-checkout');
+  if (btnSave) btnSave.addEventListener('click', handleSaveCheckout);
+
   const btnPrint = document.getElementById('btn-print-checkout');
   if (btnPrint) btnPrint.addEventListener('click', handlePrintCheckout);
 
