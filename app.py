@@ -54,6 +54,8 @@ class Item(db.Model):
     name = db.Column(db.String(100), nullable=False)
     price = db.Column(db.Float, nullable=False)  # GST inclusive
     category = db.Column(db.String(50), nullable=False)  # Scoops, Sundaes, Cones, Extras
+    is_custom_flavors = db.Column(db.Boolean, default=False)
+    custom_flavor_count = db.Column(db.Integer, default=0)
 
 
 class Bill(db.Model):
@@ -146,7 +148,7 @@ def seed_data():
     # Seed menu items (with product codes)
     if Item.query.count() == 0:
         # Product codes: SC = Scoop, SU = Sundae, CO = Cone, EX = Extra
-        items = [
+        base_items = [
             # Scoops - Classic (single only, GST inclusive)
             ('SC-001', 'Scoops', 'Vanilla Voyage', 40),
             ('SC-002', 'Scoops', 'Choco Carnival', 40),
@@ -215,8 +217,15 @@ def seed_data():
             ('EX-003', 'Extras', 'Cone', 35),
         ]
 
-        for code, cat, name, price in items:
-            db.session.add(Item(product_code=code, category=cat, name=name, price=price))
+        for code, cat, name, price in base_items:
+            item = Item(product_code=code, category=cat, name=name, price=price)
+            if '7 Wonders' in name:
+                item.is_custom_flavors = True
+                item.custom_flavor_count = 7
+            elif '5 Wonders' in name:
+                item.is_custom_flavors = True
+                item.custom_flavor_count = 5
+            db.session.add(item)
         db.session.commit()
 
     # Seed Flavors
@@ -671,7 +680,9 @@ def api_items():
             'code': i.product_code,
             'name': i.name,
             'price': i.price,
-            'category': i.category
+            'category': i.category,
+            'is_custom_flavors': i.is_custom_flavors,
+            'custom_flavor_count': i.custom_flavor_count
         }
         for i in items
     ]
@@ -997,6 +1008,53 @@ def admin_history():
     return render_template('admin_history.html', user=user, empty_tubs=empty_tubs)
 
 
+@app.route('/admin/recipes', methods=['GET'])
+@admin_required
+def admin_recipes():
+    """View the recipe matrix UI."""
+    user = get_current_user()
+    
+    items = Item.query.order_by(Item.category, Item.name).all()
+    flavors = Flavor.query.order_by(Flavor.name).all()
+    mappings = RecipeMapping.query.all()
+    
+    # Create a fast lookup dict: (item_id, flavor_id) -> scoop_count
+    recipe_dict = {}
+    for mapping in mappings:
+        recipe_dict[(mapping.item_id, mapping.flavor_id)] = mapping.scoop_count
+        
+    return render_template('admin_recipes.html', user=user, items=items, flavors=flavors, recipe_dict=recipe_dict)
+
+
+@app.route('/admin/recipes/update', methods=['POST'])
+@admin_required
+def admin_recipes_update():
+    """Update recipe mappings from the matrix form."""
+    # Data comes in as: recipe_{item_id}_{flavor_id} = {scoop_count}
+    for key, val in request.form.items():
+        if key.startswith('recipe_'):
+            try:
+                parts = key.split('_')
+                item_id = int(parts[1])
+                flavor_id = int(parts[2])
+                scoop_count = float(val) if val.strip() else 0.0
+                
+                # Check if mapping exists
+                mapping = RecipeMapping.query.filter_by(item_id=item_id, flavor_id=flavor_id).first()
+                
+                if scoop_count > 0:
+                    if mapping:
+                        mapping.scoop_count = scoop_count
+                    else:
+                        db.session.add(RecipeMapping(item_id=item_id, flavor_id=flavor_id, scoop_count=scoop_count))
+                else:
+                    if mapping:
+                        db.session.delete(mapping)
+            except (ValueError, IndexError):
+                pass # skip invalid formats
+
+    db.session.commit()
+    return redirect(url_for('admin_recipes'))
 
 
 if __name__ == '__main__':

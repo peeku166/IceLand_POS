@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Recipe Mapping (Diff Table) - IceLand POS{% endblock %}
+
+{% block content %}
+<div class="row" style="margin-bottom: 20px;">
+    <h2>Recipe Matrix</h2>
+    <p>Configure how many scoops of each flavor are used in Sundaes and Scoops.</p>
+</div>
+
+<form method="POST" action="{{ url_for('admin_recipes_update') }}">
+    <div style="overflow-x: auto;">
+        <table class="inventory-table" style="white-space: nowrap;">
+            <thead>
+                <tr>
+                    <th style="position: sticky; left: 0; background-color: #f1f1f1; z-index: 1;">Item</th>
+                    {% for flavor in flavors %}
+                    <th style="writing-mode: vertical-rl; transform: rotate(180deg); text-align: left; padding: 10px 5px; height: 120px;">
+                        {{ flavor.name }}
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td style="position: sticky; left: 0; background-color: #fff; z-index: 1; border-right: 2px solid #ddd;">
+                        <strong>{{ item.name }}</strong><br>
+                        <small style="color: #666;">{{ item.category }} | {{ item.product_code }}</small>
+                    </td>
+                    {% for flavor in flavors %}
+                        {% set count = recipe_dict.get((item.id, flavor.id), '') %}
+                        <td style="text-align: center;">
+                            <input type="number" 
+                                   name="recipe_{{ item.id }}_{{ flavor.id }}" 
+                                   value="{{ count }}" 
+                                   step="0.5" 
+                                   min="0" 
+                                   style="width: 50px; text-align: center; padding: 5px; border: 1px solid #ccc; border-radius: 4px;"
+                                   {% if count %}class="has-recipe"{% endif %}>
+                        </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div style="margin-top: 20px; text-align: right;">
+        <button type="submit" class="btn btn-primary" style="font-size: 1.1em; padding: 10px 20px;">Save Recipe Matrix</button>
+    </div>
+</form>
+
+<style>
+    .has-recipe {
+        background-color: #e6f7ff;
+        border-color: #1890ff !important;
+        font-weight: bold;
+    }
+    .inventory-table td:hover {
+        background-color: #f9f9f9;
+    }
+</style>
+{% endblock %}

@@ -76,7 +76,7 @@ function renderMenu() {
 function addToCart(item, customFlavors = null) {
   let cartKey = item.id.toString();
   
-  if (item.name.includes("5 Wonders") || item.name.includes("7 Wonders")) {
+  if (item.is_custom_flavors) {
     if (!customFlavors) {
       // Need to prompt for flavors
       openCustomFlavorModal(item);
@@ -460,7 +460,7 @@ let currentCustomItem = null;
 
 function openCustomFlavorModal(item) {
   currentCustomItem = item;
-  targetScoopCount = item.name.includes("7 Wonders") ? 7 : 5;
+  targetScoopCount = item.custom_flavor_count || 1;
   
   document.getElementById('custom-flavor-target').innerText = targetScoopCount;
   document.getElementById('custom-flavor-target-display').innerText = targetScoopCount;
