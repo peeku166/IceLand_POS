@@ -333,12 +333,14 @@ def init_db():
             conn.execute(db.text("ALTER TABLE item ADD COLUMN is_custom_flavors BOOLEAN DEFAULT FALSE"))
             conn.commit()
         except Exception as e:
+            conn.rollback()
             print(f"Migration 1 error (ignored): {e}")
             
         try:
             conn.execute(db.text("ALTER TABLE item ADD COLUMN custom_flavor_count INTEGER DEFAULT 0"))
             conn.commit()
         except Exception as e:
+            conn.rollback()
             print(f"Migration 2 error (ignored): {e}")
 
     seed_data()
