@@ -243,7 +243,8 @@ def seed_data():
         db.session.commit()
 
     # Seed Recipes
-    def upsert_recipe(product_code, flavor_name, scoop_count):
+    # Seed Recipes
+    def upsert_recipe_by_code(product_code, flavor_name, scoop_count):
         item = Item.query.filter_by(product_code=product_code).first()
         flavor = Flavor.query.filter_by(name=flavor_name).first()
         if item and flavor:
@@ -252,52 +253,63 @@ def seed_data():
                 mapping.scoop_count = scoop_count
             else:
                 db.session.add(RecipeMapping(item_id=item.id, flavor_id=flavor.id, scoop_count=scoop_count))
+
+    # Scoop Recipes (static product codes)
+    upsert_recipe_by_code('SC-001', 'Vanilla', 1)
+    upsert_recipe_by_code('SC-002', 'Chocolate', 1)
+    upsert_recipe_by_code('SC-003', 'Strawberry', 1)
+    upsert_recipe_by_code('SC-004', 'Mango', 1)
+    upsert_recipe_by_code('SC-005', 'Butterscotch', 1)
+    upsert_recipe_by_code('SC-006', 'Coffee', 1)
+    upsert_recipe_by_code('SC-007', 'Pista', 1)
+    upsert_recipe_by_code('SC-008', 'Vanilla-Strawberry', 1)
+    upsert_recipe_by_code('SC-009', 'Vanilla-Chocolate', 1)
+    upsert_recipe_by_code('SC-010', 'Blackcurrant', 1)
+    upsert_recipe_by_code('SC-011', 'Pineapple', 1)
+    upsert_recipe_by_code('SC-012', 'Guava', 1)
+    upsert_recipe_by_code('SC-013', 'Lychee', 1)
+    upsert_recipe_by_code('SC-014', 'Fig & Honey', 1)
+    upsert_recipe_by_code('SC-015', 'Peach', 1)
+    upsert_recipe_by_code('SC-016', 'Sitaphal', 1)
+    upsert_recipe_by_code('SC-017', 'Redvelvet', 1)
+    upsert_recipe_by_code('SC-018', 'Blueberry', 1)
+    upsert_recipe_by_code('SC-019', 'Avocado', 1)
+    upsert_recipe_by_code('SC-020', 'Tender Coconut', 1)
+    upsert_recipe_by_code('SC-021', 'Passion Fruit', 1)
+    upsert_recipe_by_code('SC-022', 'Jackfruit', 1)
+    upsert_recipe_by_code('SC-023', 'Kiwi', 1)
+    upsert_recipe_by_code('SC-024', 'Kesar Badam', 1)
+    upsert_recipe_by_code('SC-025', 'Oreo', 1)
+    upsert_recipe_by_code('SC-026', 'Cheesecake', 1)
+    upsert_recipe_by_code('SC-027', 'Spanish Delight', 1)
+
+    def upsert_recipe_by_name(item_name_query, flavor_name, scoop_count):
+        item = Item.query.filter(Item.name.ilike(f'%{item_name_query}%')).first()
+        flavor = Flavor.query.filter_by(name=flavor_name).first()
+        if item and flavor:
+            mapping = RecipeMapping.query.filter_by(item_id=item.id, flavor_id=flavor.id).first()
+            if mapping:
+                mapping.scoop_count = scoop_count
+            else:
+                db.session.add(RecipeMapping(item_id=item.id, flavor_id=flavor.id, scoop_count=scoop_count))
     
-    # Scoop Recipes
-    upsert_recipe('SC-001', 'Vanilla', 1)
-    upsert_recipe('SC-002', 'Chocolate', 1)
-    upsert_recipe('SC-003', 'Strawberry', 1)
-    upsert_recipe('SC-004', 'Mango', 1)
-    upsert_recipe('SC-005', 'Butterscotch', 1)
-    upsert_recipe('SC-006', 'Coffee', 1)
-    upsert_recipe('SC-007', 'Pista', 1)
-    upsert_recipe('SC-008', 'Vanilla-Strawberry', 1)
-    upsert_recipe('SC-009', 'Vanilla-Chocolate', 1)
-    upsert_recipe('SC-010', 'Blackcurrant', 1)
-    upsert_recipe('SC-011', 'Pineapple', 1)
-    upsert_recipe('SC-012', 'Guava', 1)
-    upsert_recipe('SC-013', 'Lychee', 1)
-    upsert_recipe('SC-014', 'Fig & Honey', 1)
-    upsert_recipe('SC-015', 'Peach', 1)
-    upsert_recipe('SC-016', 'Sitaphal', 1)
-    upsert_recipe('SC-017', 'Redvelvet', 1)
-    upsert_recipe('SC-018', 'Blueberry', 1)
-    upsert_recipe('SC-019', 'Avocado', 1)
-    upsert_recipe('SC-020', 'Tender Coconut', 1)
-    upsert_recipe('SC-021', 'Passion Fruit', 1)
-    upsert_recipe('SC-022', 'Jackfruit', 1)
-    upsert_recipe('SC-023', 'Kiwi', 1)
-    upsert_recipe('SC-024', 'Kesar Badam', 1)
-    upsert_recipe('SC-025', 'Oreo', 1)
-    upsert_recipe('SC-026', 'Cheesecake', 1)
-    upsert_recipe('SC-027', 'Spanish Delight', 1)
-    
-    # Sundae Recipes
-    upsert_recipe('SU-001', 'Vanilla', 1)
-    upsert_recipe('SU-001', 'Chocolate', 1)
-    upsert_recipe('SU-002', 'Vanilla', 2) # Royal Jamoon Treat / Jamoom
-    # 5 and 7 wonders are dynamic, they popup automatically
-    upsert_recipe('SU-005', 'Coffee', 2) # Tiramisu Temptation
-    upsert_recipe('SU-006', 'Blueberry', 2) # Blueberry Bliss
-    upsert_recipe('SU-007', 'Vanilla', 2)  # Oreo Cookies & Cream Crush
-    upsert_recipe('SU-008', 'Redvelvet', 1) # Red Velvet Love
-    upsert_recipe('SU-009', 'Blackcurrant', 1) # Purple Velvet Magic
-    upsert_recipe('SU-010', 'Chocolate', 1) # Chocovelvet Bliss / Chocolate bliss
-    upsert_recipe('SU-011', 'Vanilla', 1)  # Cookies Cream
-    upsert_recipe('SU-011', 'Butterscotch', 1)
-    upsert_recipe('SU-012', 'Vanilla', 1)  # Gajar Halva
-    upsert_recipe('SU-013', 'Coffee', 2)   # Hot Coffee Sundae
-    upsert_recipe('SU-014', 'Butterscotch', 2) # Hot Scoch
+    # User's Explicit Sundae Requirements
+    upsert_recipe_by_name('dbc', 'Vanilla', 1)
+    upsert_recipe_by_name('dbc', 'Chocolate', 1)
+    upsert_recipe_by_name('jamoom', 'Vanilla', 2)
+    upsert_recipe_by_name('jamoon', 'Vanilla', 2) # fallback
+    upsert_recipe_by_name('tiramisu', 'Coffee', 2)
+    upsert_recipe_by_name('blueberry bliss', 'Blueberry', 2)
+    upsert_recipe_by_name('oreo cookies', 'Vanilla', 2)
+    upsert_recipe_by_name('red velve', 'Redvelvet', 1)
+    upsert_recipe_by_name('purple velvet', 'Blackcurrant', 1)
+    upsert_recipe_by_name('chocolate bliss', 'Chocolate', 1)
+    upsert_recipe_by_name('chocovelvet bliss', 'Chocolate', 1) # fallback
+    upsert_recipe_by_name('cookies cream', 'Vanilla', 1)
+    upsert_recipe_by_name('cookies cream', 'Butterscotch', 1)
+    upsert_recipe_by_name('gajar halva', 'Vanilla', 1)
+    upsert_recipe_by_name('hot coffee sundae', 'Coffee', 2)
+    upsert_recipe_by_name('hot scoch', 'Butterscotch', 2)
 
     db.session.commit()
 
