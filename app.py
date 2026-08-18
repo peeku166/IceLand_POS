@@ -312,6 +312,16 @@ def seed_data():
 def init_db():
     """Create all tables and seed initial data."""
     db.create_all()
+    
+    # Auto-migrate existing SQLite DB on Render to add new columns
+    try:
+        db.session.execute(db.text("ALTER TABLE item ADD COLUMN is_custom_flavors BOOLEAN DEFAULT 0"))
+        db.session.execute(db.text("ALTER TABLE item ADD COLUMN custom_flavor_count INTEGER DEFAULT 0"))
+        db.session.commit()
+    except Exception as e:
+        # Ignore exception if columns already exist
+        db.session.rollback()
+
     seed_data()
 
 
