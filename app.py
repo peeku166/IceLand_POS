@@ -1059,31 +1059,36 @@ def admin_recipes():
 @admin_required
 def admin_recipes_update():
     """Update recipe mappings from the matrix form."""
-    # Data comes in as: recipe_{item_id}_{flavor_id} = {scoop_count}
-    for key, val in request.form.items():
-        if key.startswith('recipe_'):
-            try:
-                parts = key.split('_')
-                item_id = int(parts[1])
-                flavor_id = int(parts[2])
-                scoop_count = float(val) if val.strip() else 0.0
-                
-                # Check if mapping exists
-                mapping = RecipeMapping.query.filter_by(item_id=item_id, flavor_id=flavor_id).first()
-                
-                if scoop_count > 0:
-                    if mapping:
-                        mapping.scoop_count = scoop_count
+    try:
+        # Data comes in as: recipe_{item_id}_{flavor_id} = {scoop_count}
+        for key, val in request.form.items():
+            if key.startswith('recipe_'):
+                try:
+                    parts = key.split('_')
+                    item_id = int(parts[1])
+                    flavor_id = int(parts[2])
+                    scoop_count = float(val) if val.strip() else 0.0
+                    
+                    # Check if mapping exists
+                    mapping = RecipeMapping.query.filter_by(item_id=item_id, flavor_id=flavor_id).first()
+                    
+                    if scoop_count > 0:
+                        if mapping:
+                            mapping.scoop_count = scoop_count
+                        else:
+                            db.session.add(RecipeMapping(item_id=item_id, flavor_id=flavor_id, scoop_count=scoop_count))
                     else:
-                        db.session.add(RecipeMapping(item_id=item_id, flavor_id=flavor_id, scoop_count=scoop_count))
-                else:
-                    if mapping:
-                        db.session.delete(mapping)
-            except (ValueError, IndexError):
-                pass # skip invalid formats
+                        if mapping:
+                            db.session.delete(mapping)
+                except (ValueError, IndexError):
+                    pass # skip invalid formats
 
-    db.session.commit()
-    return redirect(url_for('admin_recipes'))
+        db.session.commit()
+        return redirect(url_for('admin_recipes'))
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        return f"Internal Server Error: {str(e)}<br><pre>{traceback.format_exc()}</pre>", 500
 
 
 if __name__ == '__main__':
