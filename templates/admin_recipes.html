@@ -7,7 +7,7 @@
     <p>Configure how many scoops of each flavor are used in Sundaes and Scoops.</p>
 </div>
 
-<form method="POST" action="{{ url_for('admin_recipes_update') }}">
+<form method="POST" action="{{ url_for('admin_recipes_update') }}" onsubmit="this.querySelectorAll('input[data-empty=true]').forEach(i => { if (!i.value) i.name = ''; });">
     <div style="overflow-x: auto;">
         <table class="inventory-table" style="white-space: nowrap;">
             <thead>
@@ -36,7 +36,7 @@
                                    step="0.5" 
                                    min="0" 
                                    style="width: 50px; text-align: center; padding: 5px; border: 1px solid #ccc; border-radius: 4px;"
-                                   {% if count %}class="has-recipe"{% endif %}>
+                                   {% if count %}class="has-recipe"{% else %}data-empty="true"{% endif %}>
                         </td>
                     {% endfor %}
                 </tr>
