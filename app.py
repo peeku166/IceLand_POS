@@ -987,6 +987,16 @@ def admin_inventory():
     inventory_data = []
     
     for f in flavors:
+        # Self-healing: if a previous glitch left multiple tubs OPEN, close the older ones automatically
+        open_tubs = InventoryTub.query.filter_by(flavor_id=f.id, status='OPEN').order_by(InventoryTub.opened_at).all()
+        if len(open_tubs) > 1:
+            for i in range(len(open_tubs) - 1):
+                tub = open_tubs[i]
+                next_tub = open_tubs[i+1]
+                tub.status = 'EMPTY'
+                tub.emptied_at = next_tub.opened_at
+            db.session.commit()
+            
         fridge_count = InventoryTub.query.filter_by(flavor_id=f.id, status='FRIDGE').count()
         open_tubs = InventoryTub.query.filter_by(flavor_id=f.id, status='OPEN').order_by(InventoryTub.opened_at.desc()).all()
         raw_history = InventoryTub.query.filter_by(flavor_id=f.id, status='EMPTY').order_by(InventoryTub.emptied_at.desc()).limit(10).all()
