@@ -77,16 +77,17 @@
     <!-- ITEM SALES TAB -->
     <div id="tab-items" class="tab-content">
         <div class="controls">
-            <button onclick="loadItemData()">Refresh Data</button>
+            <label>Select Date: <input type="date" id="items-date-picker" value="{{ today.strftime('%Y-%m-%d') }}"></label>
+            <button onclick="loadItemData()">Load Data</button>
         </div>
         <table class="report-table" id="items-table">
             <thead>
                 <tr>
-                    <th>Code</th>
-                    <th>Item Name</th>
-                    <th>Category</th>
-                    <th>Qty Sold</th>
-                    <th>Revenue (₹)</th>
+                    <th onclick="sortItemTable('code')" style="cursor: pointer;">Code &#x21C5;</th>
+                    <th onclick="sortItemTable('name')" style="cursor: pointer;">Item Name &#x21C5;</th>
+                    <th onclick="sortItemTable('category')" style="cursor: pointer;">Category &#x21C5;</th>
+                    <th onclick="sortItemTable('qty')" style="cursor: pointer;">Qty Sold &#x21C5;</th>
+                    <th onclick="sortItemTable('revenue')" style="cursor: pointer;">Revenue (₹) &#x21C5;</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -208,8 +209,42 @@ async function loadYearlyData() {
 
 // 4. Item Data
 async function loadItemData() {
-    const res = await fetch('/api/reports/items');
+    const date = document.getElementById('items-date-picker').value;
+    let url = '/api/reports/items';
+    if(date) {
+        url += `?start=${date}&end=${date}`;
+    }
+    const res = await fetch(url);
     const data = await res.json();
+    window.itemData = data; // Store globally for sorting
+    renderItemTable(data);
+}
+
+// Sorting logic
+let currentSortColumn = '';
+let currentSortAsc = true;
+function sortItemTable(column) {
+    if (currentSortColumn === column) {
+        currentSortAsc = !currentSortAsc;
+    } else {
+        currentSortColumn = column;
+        currentSortAsc = true;
+    }
+    
+    const sortedData = [...window.itemData].sort((a, b) => {
+        let valA = a[column];
+        let valB = b[column];
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+        
+        if (valA < valB) return currentSortAsc ? -1 : 1;
+        if (valA > valB) return currentSortAsc ? 1 : -1;
+        return 0;
+    });
+    renderItemTable(sortedData);
+}
+
+function renderItemTable(data) {
     const tbody = document.querySelector('#items-table tbody');
     tbody.innerHTML = '';
     data.forEach(item => {

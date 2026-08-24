@@ -27,13 +27,13 @@
                     <tr>
                         <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>{{ tub.flavor.name }}</strong></td>
                         <td style="padding: 10px; border-bottom: 1px solid #eee;">
-                            {{ tub.added_at.strftime('%Y-%m-%d %H:%M') if tub.added_at else 'Unknown' }}
+                            {{ tub.added_at.strftime('%d %b %Y, %I:%M %p') if tub.added_at else 'Unknown' }}
                         </td>
                         <td style="padding: 10px; border-bottom: 1px solid #eee;">
-                            {{ tub.opened_at.strftime('%Y-%m-%d %H:%M') if tub.opened_at else 'Unknown' }}
+                            {{ tub.opened_at.strftime('%d %b %Y, %I:%M %p') if tub.opened_at else 'Unknown' }}
                         </td>
                         <td style="padding: 10px; border-bottom: 1px solid #eee;">
-                            {{ tub.emptied_at.strftime('%Y-%m-%d %H:%M') if tub.emptied_at else 'Unknown' }}
+                            {{ tub.emptied_at.strftime('%d %b %Y, %I:%M %p') if tub.emptied_at else 'Unknown' }}
                         </td>
                         <td style="padding: 10px; border-bottom: 1px solid #eee;">
                             <strong>{{ tub.dynamic_scoops }}</strong>
