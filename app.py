@@ -965,10 +965,12 @@ def admin_inventory():
     for f in flavors:
         fridge_count = InventoryTub.query.filter_by(flavor_id=f.id, status='FRIDGE').count()
         open_tubs = InventoryTub.query.filter_by(flavor_id=f.id, status='OPEN').order_by(InventoryTub.opened_at.desc()).all()
+        history_tubs = InventoryTub.query.filter_by(flavor_id=f.id, status='EMPTY').order_by(InventoryTub.emptied_at.desc()).limit(5).all()
         inventory_data.append({
             'flavor': f,
             'fridge_count': fridge_count,
-            'open_tubs': open_tubs
+            'open_tubs': open_tubs,
+            'history_tubs': history_tubs
         })
         
     return render_template('admin_inventory.html', user=user, inventory_data=inventory_data, flavors=flavors)
@@ -993,6 +995,12 @@ def admin_inventory_open():
     """Open a tub from the fridge."""
     flavor_id = int(request.form.get('flavor_id', 0))
     if flavor_id:
+        # Mark currently open tubs as empty before opening a new one
+        existing_open = InventoryTub.query.filter_by(flavor_id=flavor_id, status='OPEN').all()
+        for open_tub in existing_open:
+            open_tub.status = 'EMPTY'
+            open_tub.emptied_at = datetime.utcnow()
+
         tub = InventoryTub.query.filter_by(flavor_id=flavor_id, status='FRIDGE').order_by(InventoryTub.added_at).first()
         if tub:
             tub.status = 'OPEN'

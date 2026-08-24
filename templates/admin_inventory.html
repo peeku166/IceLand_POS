@@ -49,6 +49,7 @@
                     <th style="padding: 10px; border-bottom: 1px solid #ccc;">Flavor</th>
                     <th style="padding: 10px; border-bottom: 1px solid #ccc;">In Fridge (Tubs)</th>
                     <th style="padding: 10px; border-bottom: 1px solid #ccc;">Active (Open) Tubs</th>
+                    <th style="padding: 10px; border-bottom: 1px solid #ccc;">History (Last 5 Tubs)</th>
                 </tr>
             </thead>
             <tbody>
@@ -83,6 +84,21 @@
                             </ul>
                         {% else %}
                             <span style="color: #888;">None open</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;">
+                        {% if item.history_tubs %}
+                            <ul style="margin: 0; padding-left: 20px; list-style-type: none; font-size: 0.9em;">
+                            {% for tub in item.history_tubs %}
+                                <li style="margin-bottom: 5px;">
+                                    Opened: {{ tub.opened_at.strftime('%Y-%m-%d %H:%M') if tub.opened_at else 'N/A' }}<br>
+                                    Closed: {{ tub.emptied_at.strftime('%Y-%m-%d %H:%M') if tub.emptied_at else 'N/A' }}<br>
+                                    Scoops used: <strong>{{ tub.scoops_used }}</strong>
+                                </li>
+                            {% endfor %}
+                            </ul>
+                        {% else %}
+                            <span style="color: #888; font-size: 0.9em;">No history</span>
                         {% endif %}
                     </td>
                 </tr>
