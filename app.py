@@ -965,7 +965,7 @@ def admin_inventory():
     for f in flavors:
         fridge_count = InventoryTub.query.filter_by(flavor_id=f.id, status='FRIDGE').count()
         open_tubs = InventoryTub.query.filter_by(flavor_id=f.id, status='OPEN').order_by(InventoryTub.opened_at.desc()).all()
-        history_tubs = InventoryTub.query.filter_by(flavor_id=f.id, status='EMPTY').order_by(InventoryTub.emptied_at.desc()).limit(5).all()
+        history_tubs = InventoryTub.query.filter_by(flavor_id=f.id, status='EMPTY').order_by(InventoryTub.emptied_at.desc(), InventoryTub.scoops_used.desc()).limit(5).all()
         inventory_data.append({
             'flavor': f,
             'fridge_count': fridge_count,
