@@ -100,10 +100,10 @@ class InventoryTub(db.Model):
 
     @property
     def dynamic_scoops(self):
-        if not self.opened_at:
+        if self.status == 'FRIDGE':
             return 0
-        
-        start_time = self.opened_at
+            
+        start_time = self.opened_at or self.added_at or datetime.min
         end_time = self.emptied_at or datetime.utcnow()
         
         standard_scoops = db.session.query(db.func.sum(RecipeMapping.scoop_count * (BillItem.quantity - BillItem.refunded_qty)))\
