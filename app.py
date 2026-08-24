@@ -991,10 +991,12 @@ def admin_inventory():
         open_tubs = InventoryTub.query.filter_by(flavor_id=f.id, status='OPEN').order_by(InventoryTub.opened_at).all()
         if len(open_tubs) > 1:
             for i in range(len(open_tubs) - 1):
-                tub = open_tubs[i]
-                next_tub = open_tubs[i+1]
-                tub.status = 'EMPTY'
-                tub.emptied_at = next_tub.opened_at
+                tub_id = open_tubs[i].id
+                next_opened_at = open_tubs[i+1].opened_at or datetime.utcnow()
+                InventoryTub.query.filter_by(id=tub_id).update({
+                    'status': 'EMPTY',
+                    'emptied_at': next_opened_at
+                })
             db.session.commit()
             
         fridge_count = InventoryTub.query.filter_by(flavor_id=f.id, status='FRIDGE').count()
@@ -1033,10 +1035,11 @@ def admin_inventory_open():
     flavor_id = int(request.form.get('flavor_id', 0))
     if flavor_id:
         # Mark currently open tubs as empty before opening a new one
-        existing_open = InventoryTub.query.filter_by(flavor_id=flavor_id, status='OPEN').all()
-        for open_tub in existing_open:
-            open_tub.status = 'EMPTY'
-            open_tub.emptied_at = datetime.utcnow()
+        InventoryTub.query.filter_by(flavor_id=flavor_id, status='OPEN').update({
+            'status': 'EMPTY',
+            'emptied_at': datetime.utcnow()
+        })
+        db.session.commit()
 
         tub = InventoryTub.query.filter_by(flavor_id=flavor_id, status='FRIDGE').order_by(InventoryTub.added_at).first()
         if tub:
