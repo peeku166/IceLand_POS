@@ -836,11 +836,15 @@ def api_create_bill():
                 flavor_id = int(cf.get('flavor_id'))
                 scoop_qty = float(cf.get('qty'))
                 db.session.add(BillItemCustomFlavor(bill_item_id=bi.id, flavor_id=flavor_id, scoop_count=scoop_qty))
-                # (Inventory deducted dynamically via Bills)
                 tub = get_open_tub(flavor_id)
+                if tub:
+                    tub.scoops_used += int(scoop_qty * qty)
         else:
-            # (Inventory deducted dynamically via Bills)
             recipes = RecipeMapping.query.filter_by(item_id=item.id).all()
+            for recipe in recipes:
+                tub = get_open_tub(recipe.flavor_id)
+                if tub:
+                    tub.scoops_used += int(recipe.scoop_count * qty)
 
     db.session.commit()
 
@@ -985,7 +989,10 @@ def admin_inventory():
     for f in flavors:
         fridge_count = InventoryTub.query.filter_by(flavor_id=f.id, status='FRIDGE').count()
         open_tubs = InventoryTub.query.filter_by(flavor_id=f.id, status='OPEN').order_by(InventoryTub.opened_at.desc()).all()
-        history_tubs = InventoryTub.query.filter_by(flavor_id=f.id, status='EMPTY').order_by(InventoryTub.emptied_at.desc(), InventoryTub.scoops_used.desc()).limit(5).all()
+        raw_history = InventoryTub.query.filter_by(flavor_id=f.id, status='EMPTY').order_by(InventoryTub.emptied_at.desc()).limit(10).all()
+        # Sort in python using dynamic_scoops to ensure the one with actual scoops is prioritized if emptied simultaneously
+        history_tubs = sorted(raw_history, key=lambda t: (t.emptied_at or datetime.min, t.dynamic_scoops), reverse=True)[:5]
+        
         inventory_data.append({
             'flavor': f,
             'fridge_count': fridge_count,
@@ -1062,7 +1069,9 @@ def admin_history():
     """View history of emptied tubs (Admin only)."""
     user = get_current_user()
     
-    empty_tubs = InventoryTub.query.filter_by(status='EMPTY').order_by(InventoryTub.emptied_at.desc()).all()
+    raw_empty_tubs = InventoryTub.query.filter_by(status='EMPTY').order_by(InventoryTub.emptied_at.desc()).all()
+    # Ensure they are sorted by emptied_at desc, and then by dynamic_scoops desc
+    empty_tubs = sorted(raw_empty_tubs, key=lambda t: (t.emptied_at or datetime.min, t.dynamic_scoops), reverse=True)
     
     return render_template('admin_history.html', user=user, empty_tubs=empty_tubs)
 
