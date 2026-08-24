@@ -49,7 +49,6 @@
                     <th style="padding: 10px; border-bottom: 1px solid #ccc;">Flavor</th>
                     <th style="padding: 10px; border-bottom: 1px solid #ccc;">In Fridge (Tubs)</th>
                     <th style="padding: 10px; border-bottom: 1px solid #ccc;">Active (Open) Tubs</th>
-                    <th style="padding: 10px; border-bottom: 1px solid #ccc;">History (Last 5 Tubs)</th>
                 </tr>
             </thead>
             <tbody>
@@ -72,7 +71,7 @@
                             <ul style="margin: 0; padding-left: 20px; list-style-type: none;">
                             {% for tub in item.open_tubs %}
                                 <li style="margin-bottom: 5px; display: flex; align-items: center; gap: 10px;">
-                                    <span>Opened: {{ tub.opened_at.strftime('%Y-%m-%d %H:%M') }} - Scoops used: <strong>{{ tub.scoops_used }}</strong></span>
+                                    <span>Opened: {{ tub.opened_at.strftime('%Y-%m-%d %H:%M') }} - Scoops used: <strong>{{ tub.dynamic_scoops }}</strong></span>
                                     {% if user.role == 'admin' %}
                                     <form action="{{ url_for('admin_inventory_empty') }}" method="POST" style="margin: 0;">
                                         <input type="hidden" name="tub_id" value="{{ tub.id }}">
@@ -84,30 +83,6 @@
                             </ul>
                         {% else %}
                             <span style="color: #888;">None open</span>
-                        {% endif %}
-                    </td>
-                    <td style="padding: 10px; border-bottom: 1px solid #eee;">
-                        {% if item.history_tubs %}
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.85em; text-align: left;">
-                                <thead>
-                                    <tr>
-                                        <th style="border-bottom: 1px solid #ccc; padding: 4px;">Opened</th>
-                                        <th style="border-bottom: 1px solid #ccc; padding: 4px;">Closed</th>
-                                        <th style="border-bottom: 1px solid #ccc; padding: 4px;">Scoops</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                {% for tub in item.history_tubs %}
-                                    <tr>
-                                        <td style="border-bottom: 1px solid #eee; padding: 4px;">{{ tub.opened_at.strftime('%Y-%m-%d %H:%M') if tub.opened_at else 'N/A' }}</td>
-                                        <td style="border-bottom: 1px solid #eee; padding: 4px;">{{ tub.emptied_at.strftime('%Y-%m-%d %H:%M') if tub.emptied_at else 'N/A' }}</td>
-                                        <td style="border-bottom: 1px solid #eee; padding: 4px;"><strong>{{ tub.scoops_used }}</strong></td>
-                                    </tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
-                        {% else %}
-                            <span style="color: #888; font-size: 0.9em;">No history</span>
                         {% endif %}
                     </td>
                 </tr>

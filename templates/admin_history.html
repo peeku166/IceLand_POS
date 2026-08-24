@@ -36,7 +36,7 @@
                             {{ tub.emptied_at.strftime('%Y-%m-%d %H:%M') if tub.emptied_at else 'Unknown' }}
                         </td>
                         <td style="padding: 10px; border-bottom: 1px solid #eee;">
-                            <strong>{{ tub.scoops_used }}</strong>
+                            <strong>{{ tub.dynamic_scoops }}</strong>
                         </td>
                     </tr>
                     {% endfor %}

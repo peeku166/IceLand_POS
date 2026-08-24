@@ -98,6 +98,32 @@ class InventoryTub(db.Model):
 
     flavor = db.relationship('Flavor')
 
+    @property
+    def dynamic_scoops(self):
+        if not self.opened_at:
+            return 0
+        
+        start_time = self.opened_at
+        end_time = self.emptied_at or datetime.utcnow()
+        
+        standard_scoops = db.session.query(db.func.sum(RecipeMapping.scoop_count * (BillItem.quantity - BillItem.refunded_qty)))\
+            .join(BillItem, BillItem.item_id == RecipeMapping.item_id)\
+            .join(Bill, Bill.id == BillItem.bill_id)\
+            .filter(RecipeMapping.flavor_id == self.flavor_id)\
+            .filter(Bill.created_at >= start_time)\
+            .filter(Bill.created_at <= end_time)\
+            .filter(Bill.status != 'CANCELLED').scalar() or 0
+            
+        custom_scoops = db.session.query(db.func.sum(BillItemCustomFlavor.scoop_count * (BillItem.quantity - BillItem.refunded_qty)))\
+            .join(BillItem, BillItem.id == BillItemCustomFlavor.bill_item_id)\
+            .join(Bill, Bill.id == BillItem.bill_id)\
+            .filter(BillItemCustomFlavor.flavor_id == self.flavor_id)\
+            .filter(Bill.created_at >= start_time)\
+            .filter(Bill.created_at <= end_time)\
+            .filter(Bill.status != 'CANCELLED').scalar() or 0
+            
+        return int(standard_scoops + custom_scoops)
+
 
 class RecipeMapping(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -810,17 +836,11 @@ def api_create_bill():
                 flavor_id = int(cf.get('flavor_id'))
                 scoop_qty = float(cf.get('qty'))
                 db.session.add(BillItemCustomFlavor(bill_item_id=bi.id, flavor_id=flavor_id, scoop_count=scoop_qty))
-                # Deduct inventory for custom flavors
+                # (Inventory deducted dynamically via Bills)
                 tub = get_open_tub(flavor_id)
-                if tub:
-                    tub.scoops_used += (scoop_qty * qty)
         else:
-            # Look up standard recipe and deduct inventory
+            # (Inventory deducted dynamically via Bills)
             recipes = RecipeMapping.query.filter_by(item_id=item.id).all()
-            for recipe in recipes:
-                tub = get_open_tub(recipe.flavor_id)
-                if tub:
-                    tub.scoops_used += (recipe.scoop_count * qty)
 
     db.session.commit()
 
